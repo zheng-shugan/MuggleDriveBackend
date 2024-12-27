@@ -2,6 +2,7 @@ package com.muggle.controller;
 
 import com.muggle.annotation.GlobalInterceptor;
 import com.muggle.annotation.VerifyParam;
+import com.muggle.component.RedisComponent;
 import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.CreateImageCode;
@@ -34,6 +35,8 @@ public class UserController extends ABaseController {
   @Resource private EmailCodeService emailCodeService;
 
   @Resource private AppConfig appConfig;
+
+  @Resource private RedisComponent redisComponent;
 
   @RequestMapping("/checkCode")
   public void checkCode(HttpServletResponse response, HttpSession session, Integer type)
@@ -164,7 +167,9 @@ public class UserController extends ABaseController {
     if (!file.exists()) {
       if (!new File(appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT)
           .exists()) {
-        logger.error("头像路径不存在:{}", appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT);
+        logger.error(
+            "头像路径不存在:{}",
+            appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT);
         printNoDefaultImage(response);
         return;
       }
@@ -188,5 +193,12 @@ public class UserController extends ABaseController {
     } finally {
       writer.close();
     }
+  }
+
+  @RequestMapping("/getUserInfo")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO getUserInfo(HttpSession session) {
+    SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+    return getSuccessResponseVO(sessionWebUserDto);
   }
 }
