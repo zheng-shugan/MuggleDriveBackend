@@ -92,4 +92,26 @@ public class EmailCodeServiceImpl implements EmailCodeService {
       emailCodeMapper.insert(emailCode);
     }
   }
+
+  /**
+   * 校验邮箱验证码
+   * @param email
+   * @param code
+   */
+  @Override
+  public void checkEmailCode(String email, String code) {
+    EmailCode emailCode = this.emailCodeMapper.selectByEmailAndCode(email, code);
+
+    if (emailCode == null) {
+      throw new BusinessException("邮箱验证码错误");
+    }
+
+    if (emailCode.getStatus() == 1
+        || System.currentTimeMillis() - emailCode.getCreateTime().getTime()
+            > Constants.LENGTH_15 * 1000 * 60) {
+      throw new BusinessException("邮箱验证码已失效");
+    }
+
+    emailCodeMapper.disableEmailCode(email);
+  }
 }
