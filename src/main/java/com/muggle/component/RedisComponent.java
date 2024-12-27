@@ -2,6 +2,7 @@ package com.muggle.component;
 
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.SysSettingsDto;
+import com.muggle.entity.dto.UserSpaceDto;
 import javax.annotation.Resource;
 import org.springframework.stereotype.Component;
 
@@ -23,5 +24,16 @@ public class RedisComponent {
     }
 
     return sysSettingsDto;
+  }
+
+  /**
+   * 保存用户空间使用情况
+   *
+   * @param userID
+   * @param userSpaceDto
+   */
+  public void saveUserSpaceUse(String userID, UserSpaceDto userSpaceDto) {
+    redisUtils.setex(
+        Constants.REDIS_KEY_USER_SPACE_USE + userID, userSpaceDto, Constants.REDIS_KEY_EXPIRES_DAY);
   }
 }

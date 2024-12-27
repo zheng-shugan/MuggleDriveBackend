@@ -4,6 +4,7 @@ import com.muggle.annotation.GlobalInterceptor;
 import com.muggle.annotation.VerifyParam;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.CreateImageCode;
+import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.enums.VerifyRegexEnum;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.exception.BusinessException;
@@ -62,22 +63,45 @@ public class UserController extends ABaseController {
   }
 
   @RequestMapping("/register")
-  @GlobalInterceptor(checkParam = true)
+  // @GlobalInterceptor(checkLogin = false, checkParam = true)
   public ResponseVO register(
       HttpSession session,
       @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
       @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18)
           String password,
-      @VerifyParam(required = true) String nickname,
+      @VerifyParam(required = true) String nickName,
       @VerifyParam(required = true) String checkCode,
       @VerifyParam(required = true) String emailCode) {
     try {
       // 如果checkCode与session的checkCode不一样
-      if (!checkCode.equals(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))) {
+      if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
+        throw new BusinessException("图片验证码不正确");
+      }
+      userInfoService.register(email, password, nickName, emailCode);
+      return getSuccessResponseVO(null);
+    } finally {
+      // 清除验证码
+      session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+    }
+  }
+
+  @RequestMapping("/login")
+  @GlobalInterceptor(checkParam = true)
+  public ResponseVO login(
+      HttpSession session,
+      @VerifyParam(required = true) String email,
+      @VerifyParam(required = true) String password,
+      @VerifyParam(required = true) String checkCode) {
+    try {
+      // 如果checkCode与session的checkCode不一样
+      if (!checkCode.equals(session.getAttribute(Constants.CHECK_CODE_KEY))) {
         throw new BusinessException("验证码错误");
       }
-      userInfoService.register(email, password, nickname, emailCode);
-      return getSuccessResponseVO(null);
+
+      SessionWebUserDto sessionWebUserDto = userInfoService.login(email, password);
+      session.setAttribute(Constants.SESSION_KEY, sessionWebUserDto);
+
+      return getSuccessResponseVO(sessionWebUserDto);
     } finally {
       // 清除验证码
       session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);

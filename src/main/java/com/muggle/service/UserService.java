@@ -1,9 +1,9 @@
 package com.muggle.service;
 
+import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.po.UserInfo;
 import com.muggle.entity.query.UserInfoQuery;
 import com.muggle.entity.vo.PaginationResultVO;
-
 import java.util.List;
 
 public interface UserService {
@@ -50,7 +50,12 @@ public interface UserService {
   /** 根据NickName删除 */
   Integer deleteUserInfoByNickName(String nickName);
 
+  /** 根据条件查询列表 */
   public List<UserInfo> findListByParam(UserInfoQuery userInfoQuery);
 
+  /** 注册 */
   public void register(String email, String nickname, String password, String emailCode);
+
+  /** 登录 */
+  public SessionWebUserDto login(String email, String password);
 }

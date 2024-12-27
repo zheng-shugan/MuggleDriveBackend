@@ -1,9 +1,13 @@
 package com.muggle.service.impl;
 
 import com.muggle.component.RedisComponent;
+import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
+import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.SysSettingsDto;
+import com.muggle.entity.dto.UserSpaceDto;
 import com.muggle.entity.enums.PageSize;
+import com.muggle.entity.enums.UserStatusEnum;
 import com.muggle.entity.po.UserInfo;
 import com.muggle.entity.query.SimplePage;
 import com.muggle.entity.query.UserInfoQuery;
@@ -16,6 +20,8 @@ import com.muggle.utils.StringTools;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
+import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +33,7 @@ public class UserServiceImpl implements UserService {
   @Resource private EmailCodeService emailCodeService;
 
   @Resource private RedisComponent redisComponent;
+  @Autowired private AppConfig appConfig;
 
   /** 根据条件查询列表 */
   @Override
@@ -140,32 +147,59 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public void register(String email, String nickname, String password, String emailCode) {
-    UserInfo userInfo = this.getUserInfoByEmail(email);
-    if (userInfo != null) {
-      throw new BusinessException("邮箱已存在");
+  public void register(String email, String nickName, String password, String emailCode) {
+    UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
+    if (null != userInfo) {
+      throw new BusinessException("邮箱账号已经存在");
     }
-
-    UserInfo nicknameUser = this.getUserInfoByNickName(nickname);
-    if (nicknameUser != null) {
-      throw new BusinessException("昵称已存在");
+    UserInfo nickNameUser = this.userInfoMapper.selectByNickName(nickName);
+    if (null != nickNameUser) {
+      throw new BusinessException("昵称已经存在");
     }
-
     // 校验邮箱验证码
     emailCodeService.checkEmailCode(email, emailCode);
-
-    // 设置用户信息
-    UserInfo user = new UserInfo();
-    String userID = StringTools.getRandomString(Constants.LENGTH_10);
-    userInfo.setUserId(userID);
-    user.setEmail(email);
-    user.setNickName(nickname);
-    user.setPassword(StringTools.encodeByMD5(password));
-    user.setJoinTime(new Date());
-    user.setUseSpace(0L);
+    String userId = StringTools.getRandomNumber(Constants.LENGTH_10);
+    userInfo = new UserInfo();
+    userInfo.setUserId(userId);
+    userInfo.setNickName(nickName);
+    userInfo.setEmail(email);
+    userInfo.setPassword(StringTools.encodeByMD5(password));
+    userInfo.setJoinTime(new Date());
+    userInfo.setStatus(UserStatusEnum.ENABLE.getStatus());
     SysSettingsDto sysSettingsDto = redisComponent.getSysSettings();
-    user.setTotalSpace(sysSettingsDto.getUserInitUseSpace() * Constants.MB);
-    // 添加到数据库
-    this.userInfoMapper.insert(user);
+    userInfo.setTotalSpace(sysSettingsDto.getUserInitUseSpace() * Constants.MB);
+    userInfo.setUseSpace(0L);
+    this.userInfoMapper.insert(userInfo);
+  }
+
+  @Override
+  public SessionWebUserDto login(String email, String password) {
+    UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
+    if (userInfo == null || !userInfo.getPassword().equals(password)) {
+      throw new BusinessException("账号或密码错误");
+    }
+
+    if (UserStatusEnum.DISABLE.getStatus().equals(userInfo.getStatus())) {
+      throw new BusinessException("账号已被禁用");
+    }
+
+    UserInfo updateUserInfo = new UserInfo();
+    updateUserInfo.setLastLoginTime(new Date());
+    this.userInfoMapper.updateByUserId(updateUserInfo, userInfo.getUserId());
+
+    SessionWebUserDto sessionWebUserDto = new SessionWebUserDto();
+    sessionWebUserDto.setUserId(userInfo.getUserId());
+    sessionWebUserDto.setNickName(userInfo.getNickName());
+    if (ArrayUtils.contains(appConfig.getAdminEmails().split(","), email)) {
+      sessionWebUserDto.setAdmin(true);
+    } else {
+      sessionWebUserDto.setAdmin(false);
+    }
+    // 用户空间
+    UserSpaceDto userSpaceDto = new UserSpaceDto();
+    // TODO userSpaceDto.setUseSpace();
+    userSpaceDto.setTotalSpace(userSpaceDto.getTotalSpace());
+    redisComponent.saveUserSpaceUse(userInfo.getUserId(), userSpaceDto);
+    return null;
   }
 }
