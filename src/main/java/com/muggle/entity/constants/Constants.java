@@ -69,4 +69,8 @@ public class Constants {
   public static final String REDIS_KEY_USER_SPACE_USE = "muggle:drive:user:spaceuse:";
 
   public static final String REDIS_KEY_USER_FILE_TEMP_SIZE = "muggle:drive:user:file:temp:";
+
+  public static final String CONTENT_TYPE = "Content-Type";
+
+  public static final String CONTENT_TYPE_VALUE = "application/json;charset=UTF-8";
 }

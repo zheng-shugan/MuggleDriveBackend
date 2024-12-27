@@ -2,6 +2,7 @@ package com.muggle.controller;
 
 import com.muggle.annotation.GlobalInterceptor;
 import com.muggle.annotation.VerifyParam;
+import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.CreateImageCode;
 import com.muggle.entity.dto.SessionWebUserDto;
@@ -10,18 +11,29 @@ import com.muggle.entity.vo.ResponseVO;
 import com.muggle.exception.BusinessException;
 import com.muggle.service.EmailCodeService;
 import com.muggle.service.UserService;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("/user")
 public class UserController extends ABaseController {
+
+  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
   @Resource private UserService userInfoService;
 
   @Resource private EmailCodeService emailCodeService;
+
+  @Resource private AppConfig appConfig;
 
   @RequestMapping("/checkCode")
   public void checkCode(HttpServletResponse response, HttpSession session, Integer type)
@@ -129,6 +141,52 @@ public class UserController extends ABaseController {
     } finally {
       // 清除验证码
       session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+    }
+  }
+
+  @RequestMapping("/getAvatar/{userId}")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public void getAvatar(
+      HttpServletResponse response,
+      @VerifyParam(required = true) @PathVariable("userId") String userId) {
+
+    String avatarFolderName = Constants.FILE_FOLDER_FILE + Constants.FILE_FOLDER_AVATAR_NAME;
+    File folder = new File(appConfig.getProjectFolder() + avatarFolderName);
+
+    if (!folder.exists()) {
+      folder.mkdirs();
+    }
+
+    String avatarPath =
+        appConfig.getProjectFolder() + avatarFolderName + userId + Constants.AVATAR_SUFFIX;
+    File file = new File(avatarPath);
+
+    if (!file.exists()) {
+      if (!new File(appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT)
+          .exists()) {
+        logger.error("头像路径不存在:{}", appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT);
+        printNoDefaultImage(response);
+        return;
+      }
+
+      avatarPath = appConfig.getProjectFolder() + avatarFolderName + Constants.AVATAR_DEFUALT;
+    }
+    response.setContentType("image/jpg");
+    readFile(response, avatarPath);
+  }
+
+  private void printNoDefaultImage(HttpServletResponse response) {
+    response.setHeader(Constants.CONTENT_TYPE, Constants.CONTENT_TYPE_VALUE);
+    response.setStatus(HttpStatus.OK.value());
+    PrintWriter writer = null;
+    try {
+      writer = response.getWriter();
+      writer.print("请在头像目录下放置默认头像default_avatar.jpg");
+      writer.close();
+    } catch (Exception e) {
+      logger.error("输出无默认图失败", e);
+    } finally {
+      writer.close();
     }
   }
 }
