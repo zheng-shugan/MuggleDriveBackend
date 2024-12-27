@@ -7,6 +7,7 @@ import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.CreateImageCode;
 import com.muggle.entity.dto.SessionWebUserDto;
+import com.muggle.entity.dto.UserSpaceDto;
 import com.muggle.entity.enums.VerifyRegexEnum;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.exception.BusinessException;
@@ -200,5 +201,16 @@ public class UserController extends ABaseController {
   public ResponseVO getUserInfo(HttpSession session) {
     SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
     return getSuccessResponseVO(sessionWebUserDto);
+  }
+
+  @RequestMapping("/getUserSpace")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO getUserSpace(HttpSession session) {
+    SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+
+    UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(sessionWebUserDto.getUserId());
+
+
+    return getSuccessResponseVO(userSpaceDto);
   }
 }

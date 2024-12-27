@@ -197,7 +197,8 @@ public class UserServiceImpl implements UserService {
     }
     // 用户空间
     UserSpaceDto userSpaceDto = new UserSpaceDto();
-    // TODO userSpaceDto.setUseSpace();
+    // TODO 查询当前用户的使用的空间
+    // serSpaceDto.setUseSpace();
     userSpaceDto.setTotalSpace(userSpaceDto.getTotalSpace());
     redisComponent.saveUserSpaceUse(userInfo.getUserId(), userSpaceDto);
     return null;
