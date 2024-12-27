@@ -201,21 +201,21 @@ public class UserServiceImpl implements UserService {
     // serSpaceDto.setUseSpace();
     userSpaceDto.setTotalSpace(userSpaceDto.getTotalSpace());
     redisComponent.saveUserSpaceUse(userInfo.getUserId(), userSpaceDto);
-    return null;
+    return sessionWebUserDto;
   }
 
   @Override
   @Transactional
   public void resetPassword(String email, String password, String emailCode) {
-    UserInfo userInfo = userInfoMapper.selectByEmail(email);
-
-    if (userInfo == null) {
+    UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
+    if (null == userInfo) {
       throw new BusinessException("邮箱账号不存在");
     }
-
+    // 校验邮箱验证码
     emailCodeService.checkEmailCode(email, emailCode);
-    UserInfo updateUserInfo = new UserInfo();
-    updateUserInfo.setPassword(StringTools.encodeByMD5(password));
-    userInfoMapper.updateByEmail(updateUserInfo, email);
+
+    UserInfo updateInfo = new UserInfo();
+    updateInfo.setPassword(StringTools.encodeByMD5(password));
+    this.userInfoMapper.updateByEmail(updateInfo, email);
   }
 }

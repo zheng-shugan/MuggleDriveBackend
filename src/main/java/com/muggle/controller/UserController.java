@@ -9,6 +9,7 @@ import com.muggle.entity.dto.CreateImageCode;
 import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.UserSpaceDto;
 import com.muggle.entity.enums.VerifyRegexEnum;
+import com.muggle.entity.po.UserInfo;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.exception.BusinessException;
 import com.muggle.service.EmailCodeService;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController("/user")
 public class UserController extends ABaseController {
@@ -181,6 +183,33 @@ public class UserController extends ABaseController {
     readFile(response, avatarPath);
   }
 
+  @RequestMapping("/updateUserAvatar")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO updateUserAvatar(HttpSession session, MultipartFile avatar) {
+
+    SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+
+    String baseFolder = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
+    File targetFileFolder = new File(baseFolder + Constants.FILE_FOLDER_AVATAR_NAME);
+    if (!targetFileFolder.exists()) {
+      targetFileFolder.mkdirs();
+    }
+    String userId = webUserDto.getUserId();
+    File targetFile = new File(targetFileFolder.getPath() + "/" + userId + Constants.AVATAR_SUFFIX);
+    try {
+      avatar.transferTo(targetFile);
+    } catch (Exception e) {
+      logger.error("上传头像失败", e);
+    }
+
+    UserInfo userInfo = new UserInfo();
+
+    // userInfoService.updateUserInfoByUserId(userInfo, userId);
+    webUserDto.setAvatar(null);
+    session.setAttribute(Constants.SESSION_KEY, webUserDto);
+    return getSuccessResponseVO(null);
+  }
+
   private void printNoDefaultImage(HttpServletResponse response) {
     response.setHeader(Constants.CONTENT_TYPE, Constants.CONTENT_TYPE_VALUE);
     response.setStatus(HttpStatus.OK.value());
@@ -214,7 +243,7 @@ public class UserController extends ABaseController {
   }
 
   @RequestMapping("/logout")
-  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  @GlobalInterceptor(checkLogin = true, checkParam = true)
   public ResponseVO logout(HttpSession session) {
     // 清除 session
     session.invalidate();

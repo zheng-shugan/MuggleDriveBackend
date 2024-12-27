@@ -74,23 +74,22 @@ public class EmailCodeServiceImpl implements EmailCodeService {
       if (userInfo != null) {
         throw new RuntimeException("邮箱已存在");
       }
-
-      // 每次发送邮件前都要禁用之前的验证码
-      emailCodeMapper.disableEmailCode(email);
-
-      // 验证码
-      String code = StringTools.getRandomNumber(Constants.LENGTH_5);
-      // 发送验证码
-      sendEmailCode(email, code);
-
-      // 保存验证码
-      EmailCode emailCode = new EmailCode();
-      emailCode.setCode(code);
-      emailCode.setEmail(email);
-      emailCode.setStatus(Constants.ZERO);
-      emailCode.setCreateTime(new Date());
-      emailCodeMapper.insert(emailCode);
     }
+    // 每次发送邮件前都要禁用之前的验证码
+    emailCodeMapper.disableEmailCode(email);
+
+    // 验证码
+    String code = StringTools.getRandomNumber(Constants.LENGTH_5);
+    // 发送验证码
+    sendEmailCode(email, code);
+
+    // 保存验证码
+    EmailCode emailCode = new EmailCode();
+    emailCode.setCode(code);
+    emailCode.setEmail(email);
+    emailCode.setStatus(Constants.ZERO);
+    emailCode.setCreateTime(new Date());
+    emailCodeMapper.insert(emailCode);
   }
 
   /**
