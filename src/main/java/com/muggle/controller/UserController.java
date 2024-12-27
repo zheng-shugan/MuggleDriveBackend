@@ -1,5 +1,7 @@
 package com.muggle.controller;
 
+import com.muggle.annotation.GlobalInterceptor;
+import com.muggle.annotation.VerifyParam;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.CreateImageCode;
 import com.muggle.entity.vo.ResponseVO;
@@ -10,6 +12,8 @@ import java.io.IOException;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,8 +41,12 @@ public class UserController extends ABaseController {
   }
 
   @RequestMapping("/sendEmailCode")
+  @GlobalInterceptor(checkParam = true)
   public ResponseVO sendEmailCode(
-      HttpSession session, String email, String checkCode, Integer type) {
+      HttpSession session,
+      @VerifyParam(required = true) String email,
+      @VerifyParam(required = true) String checkCode,
+      @VerifyParam(required = true) Integer type) {
     try {
       // 如果checkCode与session的checkCode不一样
       if (!checkCode.equals(session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))) {
@@ -46,7 +54,7 @@ public class UserController extends ABaseController {
       }
 
       // 发送验证码
-      emailCodeService.sendEmailCode(email, type);
+      // emailCodeService.sendEmailCode(email, type);
       return getSuccessResponseVO(null);
     } finally {
       // 清除验证码

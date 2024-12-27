@@ -1,7 +1,7 @@
 package com.muggle.entity.enums;
 
 public enum VerifyRegexEnum {
-  NO("", "不校验"),
+  NONE("", "不校验"),
   IP(
       "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}",
       "IP地址"),
