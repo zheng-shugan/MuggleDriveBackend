@@ -210,7 +210,14 @@ public class UserController extends ABaseController {
 
     UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(sessionWebUserDto.getUserId());
 
-
     return getSuccessResponseVO(userSpaceDto);
+  }
+
+  @RequestMapping("/logout")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO logout(HttpSession session) {
+    // 清除 session
+    session.invalidate();
+    return getSuccessResponseVO(null);
   }
 }
