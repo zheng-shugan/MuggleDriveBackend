@@ -1,15 +1,10 @@
 package com.muggle.entity.vo;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.Date;
-
-import com.muggle.entity.enums.DateTimePatternEnum;
-import com.muggle.utils.DateUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.io.Serializable;
+import java.util.Date;
+import org.springframework.format.annotation.DateTimeFormat;
 
 /** 用户信息 */
 public class UserInfoVO implements Serializable {

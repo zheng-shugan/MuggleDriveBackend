@@ -1,12 +1,11 @@
 package com.muggle.entity.po;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.muggle.entity.enums.DateTimePatternEnum;
 import com.muggle.utils.DateUtil;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.io.Serializable;
 import java.util.Date;
+import org.springframework.format.annotation.DateTimeFormat;
 
 /** 邮箱验证码 */
 public class EmailCode implements Serializable {

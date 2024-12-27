@@ -7,188 +7,177 @@ import java.io.Serializable;
 import java.util.Date;
 import org.springframework.format.annotation.DateTimeFormat;
 
-/**
- * 分享信息
- */
+/** 分享信息 */
 public class FileShare implements Serializable {
 
+  /** 分享ID */
+  private String shareId;
 
-    /**
-     * 分享ID
-     */
-    private String shareId;
+  /** 文件ID */
+  private String fileId;
 
-    /**
-     * 文件ID
-     */
-    private String fileId;
+  /** 用户ID */
+  private String userId;
 
-    /**
-     * 用户ID
-     */
-    private String userId;
+  /** 有效期类型 0:1天 1:7天 2:30天 3:永久有效 */
+  private Integer validType;
 
-    /**
-     * 有效期类型 0:1天 1:7天 2:30天 3:永久有效
-     */
-    private Integer validType;
+  /** 失效时间 */
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private Date expireTime;
 
-    /**
-     * 失效时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date expireTime;
+  /** 分享时间 */
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private Date shareTime;
 
-    /**
-     * 分享时间
-     */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date shareTime;
+  /** 提取码 */
+  private String code;
 
-    /**
-     * 提取码
-     */
-    private String code;
+  /** 浏览次数 */
+  private Integer showCount;
 
-    /**
-     * 浏览次数
-     */
-    private Integer showCount;
+  private String fileName;
 
+  /** 0:文件 1:目录 */
+  private Integer folderType;
 
-    private String fileName;
+  /** 1:视频 2:音频 3:图片 4:文档 5:其他 */
+  private Integer fileCategory;
 
-    /**
-     * 0:文件 1:目录
-     */
-    private Integer folderType;
+  /** 1:视频 2:音频 3:图片 4:pdf 5:doc 6:excel 7:txt 8:code 9:zip 10:其他 */
+  private Integer fileType;
 
-    /**
-     * 1:视频 2:音频  3:图片 4:文档 5:其他
-     */
-    private Integer fileCategory;
+  /** 封面 */
+  private String fileCover;
 
-    /**
-     * 1:视频 2:音频  3:图片 4:pdf 5:doc 6:excel 7:txt 8:code 9:zip 10:其他
-     */
-    private Integer fileType;
+  public String getFileName() {
+    return fileName;
+  }
 
-    /**
-     * 封面
-     */
-    private String fileCover;
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+  }
 
-    public String getFileName() {
-        return fileName;
-    }
+  public String getShareId() {
+    return this.shareId;
+  }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
+  public void setShareId(String shareId) {
+    this.shareId = shareId;
+  }
 
-    public String getShareId() {
-        return this.shareId;
-    }
+  public String getFileId() {
+    return this.fileId;
+  }
 
-    public void setShareId(String shareId) {
-        this.shareId = shareId;
-    }
+  public void setFileId(String fileId) {
+    this.fileId = fileId;
+  }
 
-    public String getFileId() {
-        return this.fileId;
-    }
+  public String getUserId() {
+    return this.userId;
+  }
 
-    public void setFileId(String fileId) {
-        this.fileId = fileId;
-    }
+  public void setUserId(String userId) {
+    this.userId = userId;
+  }
 
-    public String getUserId() {
-        return this.userId;
-    }
+  public Integer getValidType() {
+    return this.validType;
+  }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+  public void setValidType(Integer validType) {
+    this.validType = validType;
+  }
 
-    public Integer getValidType() {
-        return this.validType;
-    }
+  public Date getExpireTime() {
+    return this.expireTime;
+  }
 
-    public void setValidType(Integer validType) {
-        this.validType = validType;
-    }
+  public void setExpireTime(Date expireTime) {
+    this.expireTime = expireTime;
+  }
 
-    public Date getExpireTime() {
-        return this.expireTime;
-    }
+  public Date getShareTime() {
+    return this.shareTime;
+  }
 
-    public void setExpireTime(Date expireTime) {
-        this.expireTime = expireTime;
-    }
+  public void setShareTime(Date shareTime) {
+    this.shareTime = shareTime;
+  }
 
-    public Date getShareTime() {
-        return this.shareTime;
-    }
+  public String getCode() {
+    return this.code;
+  }
 
-    public void setShareTime(Date shareTime) {
-        this.shareTime = shareTime;
-    }
+  public void setCode(String code) {
+    this.code = code;
+  }
 
-    public String getCode() {
-        return this.code;
-    }
+  public Integer getShowCount() {
+    return this.showCount;
+  }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+  public void setShowCount(Integer showCount) {
+    this.showCount = showCount;
+  }
 
-    public Integer getShowCount() {
-        return this.showCount;
-    }
+  public Integer getFolderType() {
+    return folderType;
+  }
 
-    public void setShowCount(Integer showCount) {
-        this.showCount = showCount;
-    }
+  public void setFolderType(Integer folderType) {
+    this.folderType = folderType;
+  }
 
-    public Integer getFolderType() {
-        return folderType;
-    }
+  public Integer getFileCategory() {
+    return fileCategory;
+  }
 
-    public void setFolderType(Integer folderType) {
-        this.folderType = folderType;
-    }
+  public void setFileCategory(Integer fileCategory) {
+    this.fileCategory = fileCategory;
+  }
 
-    public Integer getFileCategory() {
-        return fileCategory;
-    }
+  public Integer getFileType() {
+    return fileType;
+  }
 
-    public void setFileCategory(Integer fileCategory) {
-        this.fileCategory = fileCategory;
-    }
+  public void setFileType(Integer fileType) {
+    this.fileType = fileType;
+  }
 
-    public Integer getFileType() {
-        return fileType;
-    }
+  public String getFileCover() {
+    return fileCover;
+  }
 
-    public void setFileType(Integer fileType) {
-        this.fileType = fileType;
-    }
+  public void setFileCover(String fileCover) {
+    this.fileCover = fileCover;
+  }
 
-    public String getFileCover() {
-        return fileCover;
-    }
-
-    public void setFileCover(String fileCover) {
-        this.fileCover = fileCover;
-    }
-
-    @Override
-    public String toString() {
-        return "分享ID:" + (shareId == null ? "空" : shareId) + "，文件ID:" + (fileId == null ? "空" : fileId) + "，用户ID:" + (userId == null ? "空" : userId) + "，有效期类型 0:1天 " +
-                "1:7天 2:30天 3:永久有效:" + (validType == null ? "空" : validType) + "，失效时间:" + (expireTime == null ? "空" : DateUtil.format(expireTime,
-                DateTimePatternEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + "，分享时间:" + (shareTime == null ? "空" : DateUtil.format(shareTime,
-                DateTimePatternEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + "，提取码:" + (code == null ? "空" : code) + "，浏览次数:" + (showCount == null ? "空" : showCount);
-    }
+  @Override
+  public String toString() {
+    return "分享ID:"
+        + (shareId == null ? "空" : shareId)
+        + "，文件ID:"
+        + (fileId == null ? "空" : fileId)
+        + "，用户ID:"
+        + (userId == null ? "空" : userId)
+        + "，有效期类型 0:1天 "
+        + "1:7天 2:30天 3:永久有效:"
+        + (validType == null ? "空" : validType)
+        + "，失效时间:"
+        + (expireTime == null
+            ? "空"
+            : DateUtil.format(expireTime, DateTimePatternEnum.YYYY_MM_DD_HH_MM_SS.getPattern()))
+        + "，分享时间:"
+        + (shareTime == null
+            ? "空"
+            : DateUtil.format(shareTime, DateTimePatternEnum.YYYY_MM_DD_HH_MM_SS.getPattern()))
+        + "，提取码:"
+        + (code == null ? "空" : code)
+        + "，浏览次数:"
+        + (showCount == null ? "空" : showCount);
+  }
 }

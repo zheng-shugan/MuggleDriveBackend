@@ -1,9 +1,9 @@
 package com.muggle.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.io.Serializable;
 
+/** 系统设置 DTO */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SysSettingsDto implements Serializable {
   /** 注册发送邮件标题 */

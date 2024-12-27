@@ -6,7 +6,7 @@ public enum FileDelFlagEnums {
   RECYCLE(1, "回收站"),
   USING(2, "使用中");
 
-    private final Integer flag;
+  private final Integer flag;
   private final String desc;
 
   FileDelFlagEnums(Integer flag, String desc) {

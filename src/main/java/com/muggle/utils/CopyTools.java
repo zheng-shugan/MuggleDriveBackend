@@ -1,9 +1,8 @@
 package com.muggle.utils;
 
-import org.springframework.beans.BeanUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.BeanUtils;
 
 public class CopyTools {
   public static <T, S> List<T> copyList(List<S> sList, Class<T> classz) {

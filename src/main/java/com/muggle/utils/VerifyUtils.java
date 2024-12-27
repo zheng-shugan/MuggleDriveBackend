@@ -1,7 +1,6 @@
 package com.muggle.utils;
 
 import com.muggle.entity.enums.VerifyRegexEnum;
-
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

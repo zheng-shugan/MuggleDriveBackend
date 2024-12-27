@@ -1,6 +1,5 @@
 package com.muggle.entity.query;
 
-import java.util.Date;
 
 /** 用户信息参数 */
 public class UserInfoQuery extends BaseParam {
@@ -218,11 +217,11 @@ public class UserInfoQuery extends BaseParam {
     this.useSpace = useSpace;
   }
 
-  public void setTotalSpace(Long totalSpace) {
-    this.totalSpace = totalSpace;
-  }
-
   public Long getTotalSpace() {
     return this.totalSpace;
+  }
+
+  public void setTotalSpace(Long totalSpace) {
+    this.totalSpace = totalSpace;
   }
 }

@@ -45,6 +45,12 @@ public class StringTools {
     return RandomStringUtils.random(count, true, true);
   }
 
+  /**
+   * 生成随机数字字符串
+   *
+   * @param count 字符串的长度
+   * @return 字符串
+   */
   public static final String getRandomNumber(Integer count) {
     return RandomStringUtils.random(count, false, true);
   }
@@ -71,6 +77,6 @@ public class StringTools {
     if (StringTools.isEmpty(path)) {
       return true;
     }
-      return !path.contains("../") && !path.contains("..\\");
+    return !path.contains("../") && !path.contains("..\\");
   }
 }
