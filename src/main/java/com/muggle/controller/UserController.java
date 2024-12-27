@@ -63,7 +63,7 @@ public class UserController extends ABaseController {
   }
 
   @RequestMapping("/register")
-  // @GlobalInterceptor(checkLogin = false, checkParam = true)
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
   public ResponseVO register(
       HttpSession session,
       @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
@@ -102,6 +102,30 @@ public class UserController extends ABaseController {
       session.setAttribute(Constants.SESSION_KEY, sessionWebUserDto);
 
       return getSuccessResponseVO(sessionWebUserDto);
+    } finally {
+      // 清除验证码
+      session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
+    }
+  }
+
+  @RequestMapping("/resetPassword")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO resetPassword(
+      HttpSession session,
+      @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
+      @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18)
+          String password,
+      @VerifyParam(required = true) String checkCode,
+      @VerifyParam(required = true) String emailCode) {
+    try {
+      // 如果checkCode与session的checkCode不一样
+      if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
+        throw new BusinessException("图片验证码不正确");
+      }
+
+      // 修改密码
+      userInfoService.resetPassword(email, password, emailCode);
+      return getSuccessResponseVO(null);
     } finally {
       // 清除验证码
       session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);

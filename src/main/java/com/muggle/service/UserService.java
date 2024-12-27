@@ -58,4 +58,7 @@ public interface UserService {
 
   /** 登录 */
   public SessionWebUserDto login(String email, String password);
+
+  /** 修改密码 */
+  void resetPassword(String email, String password, String emailCode);
 }
