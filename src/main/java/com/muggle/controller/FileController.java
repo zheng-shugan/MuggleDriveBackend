@@ -5,13 +5,15 @@ import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileDelFlagEnums;
-import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
+import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.PaginationResultVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.service.FileService;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,20 +22,28 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController("fileInfoController")
 public class FileController extends ABaseController {
 
+  private static final Logger logger = LoggerFactory.getLogger(FileController.class);
   @Resource private FileService fileService;
 
+  /**
+   * 获取文件列表
+   *
+   * @param session
+   * @param query
+   * @param category
+   * @return
+   */
   @RequestMapping("/loadDataList")
   public ResponseVO loadDataList(HttpSession session, FileInfoQuery query, String category) {
     FileCategoryEnums categoryEnum = FileCategoryEnums.getByCode(category);
-    if (categoryEnum != null) {
+    if (null != categoryEnum) {
       query.setFileCategory(categoryEnum.getCategory());
     }
     query.setUserId(getUserInfoFromSession(session).getUserId());
     query.setOrderBy("last_update_time desc");
     query.setDelFlag(FileDelFlagEnums.USING.getFlag());
     PaginationResultVO resultVO = fileService.findListByPage(query);
-
-    return getSuccessResponseVO(convert2PaginationVO(resultVO, FileInfo.class));
+    return getSuccessResponseVO(convert2PaginationVO(resultVO, FileInfoVO.class));
   }
 
   /**
@@ -42,7 +52,7 @@ public class FileController extends ABaseController {
    * @param session
    * @param fileId 文件ID
    * @param filePid 文件父ID
-   * @param fileMD5 文件MD5
+   * @param fileMd5 文件MD5
    * @param chunkIndex 当前块索引
    * @param chunks 总块数
    * @return
