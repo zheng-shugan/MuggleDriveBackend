@@ -1,6 +1,5 @@
 package com.muggle.controller;
 
-import com.muggle.annotation.GlobalInterceptor;
 import com.muggle.annotation.VerifyParam;
 import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.UploadResultDto;
@@ -15,6 +14,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/file")
 @RestController("fileInfoController")
@@ -48,21 +48,22 @@ public class FileController extends ABaseController {
    * @return
    */
   @RequestMapping("/uploadFile")
-  @GlobalInterceptor(checkParam = true)
+  // @GlobalInterceptor(checkParam = true)
   public ResponseVO uploadFile(
       HttpSession session,
-      @VerifyParam(required = true) String fileId,
+      MultipartFile file,
+      String fileId,
+      @VerifyParam(required = false) String fileName,
       @VerifyParam(required = true) String filePid,
-      @VerifyParam(required = true) String fileMD5,
+      @VerifyParam(required = true) String fileMd5,
       @VerifyParam(required = true) Integer chunkIndex,
       @VerifyParam(required = true) Integer chunks) {
 
     SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
-    UploadResultDto uploadResultDto =
+    UploadResultDto resultDto =
         fileService.uploadFile(
-            userInfoFromSession, fileId, null, null, filePid, fileMD5, chunkIndex, chunks);
+            userInfoFromSession, fileId, file, fileName, filePid, fileMd5, chunkIndex, chunks);
 
-
-    return getSuccessResponseVO(uploadResultDto);
+    return getSuccessResponseVO(resultDto);
   }
 }

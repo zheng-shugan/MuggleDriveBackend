@@ -5,9 +5,8 @@ import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.PaginationResultVO;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface FileService {
 

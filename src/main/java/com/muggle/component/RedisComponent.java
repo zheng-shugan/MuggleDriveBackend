@@ -3,17 +3,15 @@ package com.muggle.component;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.SysSettingsDto;
 import com.muggle.entity.dto.UserSpaceDto;
-import javax.annotation.Resource;
-
 import com.muggle.mappers.FileInfoMapper;
+import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("redisComponent")
 public class RedisComponent {
   @Resource private RedisUtils redisUtils;
-  @Autowired
-  private FileInfoMapper fileInfoMapper;
+  @Autowired private FileInfoMapper fileInfoMapper;
 
   /**
    * 获取系统设置
@@ -62,5 +60,52 @@ public class RedisComponent {
     }
 
     return userSpaceDto;
+  }
+
+  /**
+   * 保存临时文件大小
+   * @param userId
+   * @param fileId
+   * @param fileSize
+   */
+  public void saveTempFileSize(String userId, String fileId, Long fileSize) {
+    Long currSize = getTempFileSize(userId, fileId);
+    redisUtils.setex(
+        Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId,
+        currSize + fileSize,
+        Constants.REDIS_KEY_EXPIRES_ONE_HOUR);
+  }
+
+  /**
+   * 获取临时文件大小
+   *
+   * @param userId
+   * @param fileId
+   * @return
+   */
+  public Long getTempFileSize(String userId, String fileId) {
+    Long currSize = getFileSizeFromRedis(Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId);
+    return currSize;
+  }
+
+  /**
+   * 从 redis 获取文件大小
+   *
+   * @param key
+   * @return
+   */
+  public Long getFileSizeFromRedis(String key) {
+    Object sizeObj = redisUtils.get(key);
+
+    if (sizeObj == null) {
+      return 0L;
+    }
+    if (sizeObj instanceof Integer) {
+      return ((Integer) sizeObj).longValue();
+    } else if (sizeObj instanceof Long) {
+      return (Long) sizeObj;
+    }
+
+    return 0L;
   }
 }
