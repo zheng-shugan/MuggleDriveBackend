@@ -1,8 +1,11 @@
 package com.muggle.service;
 
+import com.muggle.entity.dto.SessionWebUserDto;
+import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.PaginationResultVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,4 +37,14 @@ public interface FileService {
 
   /** 根据FileIdAndUserId删除 */
   Integer deleteFileInfoByFileIdAndUserId(String fileId, String userId);
+
+  UploadResultDto uploadFile(
+      SessionWebUserDto webUserDto,
+      String fileId,
+      MultipartFile file,
+      String fileName,
+      String filePid,
+      String fileMd5,
+      Integer chunkIndex,
+      Integer chunks);
 }

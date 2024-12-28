@@ -232,7 +232,7 @@ public class UserController extends ABaseController {
     return getSuccessResponseVO(sessionWebUserDto);
   }
 
-  @RequestMapping("/getUserSpace")
+  @RequestMapping("/getUseSpace")
   @GlobalInterceptor(checkLogin = false, checkParam = true)
   public ResponseVO getUserSpace(HttpSession session) {
     SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);

@@ -4,11 +4,16 @@ import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.SysSettingsDto;
 import com.muggle.entity.dto.UserSpaceDto;
 import javax.annotation.Resource;
+
+import com.muggle.mappers.FileInfoMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component("redisComponent")
 public class RedisComponent {
   @Resource private RedisUtils redisUtils;
+  @Autowired
+  private FileInfoMapper fileInfoMapper;
 
   /**
    * 获取系统设置
@@ -49,8 +54,8 @@ public class RedisComponent {
 
     if (userSpaceDto == null) {
       userSpaceDto = new UserSpaceDto();
-      // TODO 查询当前用户的使用的空间
-      userSpaceDto.setUseSpace(0L);
+      Long useSpace = fileInfoMapper.selectUseSpace(userID);
+      userSpaceDto.setUseSpace(useSpace);
       userSpaceDto.setTotalSpace(getSysSettings().getUserInitUseSpace() * Constants.MB);
 
       this.saveUserSpaceUse(userID, userSpaceDto);

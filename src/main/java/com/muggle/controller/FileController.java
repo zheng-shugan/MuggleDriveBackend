@@ -1,5 +1,9 @@
 package com.muggle.controller;
 
+import com.muggle.annotation.GlobalInterceptor;
+import com.muggle.annotation.VerifyParam;
+import com.muggle.entity.dto.SessionWebUserDto;
+import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileDelFlagEnums;
 import com.muggle.entity.po.FileInfo;
@@ -30,5 +34,35 @@ public class FileController extends ABaseController {
     PaginationResultVO resultVO = fileService.findListByPage(query);
 
     return getSuccessResponseVO(convert2PaginationVO(resultVO, FileInfo.class));
+  }
+
+  /**
+   * 上传文件
+   *
+   * @param session
+   * @param fileId 文件ID
+   * @param filePid 文件父ID
+   * @param fileMD5 文件MD5
+   * @param chunkIndex 当前块索引
+   * @param chunks 总块数
+   * @return
+   */
+  @RequestMapping("/uploadFile")
+  @GlobalInterceptor(checkParam = true)
+  public ResponseVO uploadFile(
+      HttpSession session,
+      @VerifyParam(required = true) String fileId,
+      @VerifyParam(required = true) String filePid,
+      @VerifyParam(required = true) String fileMD5,
+      @VerifyParam(required = true) Integer chunkIndex,
+      @VerifyParam(required = true) Integer chunks) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+    UploadResultDto uploadResultDto =
+        fileService.uploadFile(
+            userInfoFromSession, fileId, null, null, filePid, fileMD5, chunkIndex, chunks);
+
+
+    return getSuccessResponseVO(uploadResultDto);
   }
 }

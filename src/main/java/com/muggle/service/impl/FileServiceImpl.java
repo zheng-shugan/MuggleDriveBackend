@@ -1,20 +1,37 @@
 package com.muggle.service.impl;
 
-import com.muggle.entity.enums.PageSize;
+import com.muggle.component.RedisComponent;
+import com.muggle.entity.constants.Constants;
+import com.muggle.entity.dto.SessionWebUserDto;
+import com.muggle.entity.dto.UploadResultDto;
+import com.muggle.entity.dto.UserSpaceDto;
+import com.muggle.entity.enums.*;
 import com.muggle.entity.po.FileInfo;
+import com.muggle.entity.po.UserInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.query.SimplePage;
+import com.muggle.entity.query.UserInfoQuery;
 import com.muggle.entity.vo.PaginationResultVO;
+import com.muggle.exception.BusinessException;
 import com.muggle.mappers.FileInfoMapper;
+import com.muggle.mappers.UserInfoMapper;
 import com.muggle.service.FileService;
+import com.muggle.utils.StringTools;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Component("fileService")
 public class FileServiceImpl implements FileService {
 
   @Resource private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
+
+  @Resource private UserInfoMapper<UserInfo, UserInfoQuery> userInfoMapper;
+
+  @Resource private RedisComponent redisComponent;
 
   /** 根据条件查询列表 */
   @Override
@@ -83,5 +100,111 @@ public class FileServiceImpl implements FileService {
   @Override
   public Integer deleteFileInfoByFileIdAndUserId(String fileId, String userId) {
     return this.fileInfoMapper.deleteByFileIdAndUserId(fileId, userId);
+  }
+
+  /**
+   * 上传文件
+   * @param webUserDto
+   * @param fileId
+   * @param file
+   * @param fileName
+   * @param filePid
+   * @param fileMd5
+   * @param chunkIndex
+   * @param chunks
+   * @return
+   */
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public UploadResultDto uploadFile(
+      SessionWebUserDto webUserDto,
+      String fileId,
+      MultipartFile file,
+      String fileName,
+      String filePid,
+      String fileMd5,
+      Integer chunkIndex,
+      Integer chunks) {
+
+    UploadResultDto resultDto = new UploadResultDto();
+    if (StringTools.isEmpty(fileId)) {
+      fileId = StringTools.getRandomNumber(Constants.LENGTH_10);
+    }
+    resultDto.setFileId(fileId);
+    Date currDate = new Date();
+    UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(webUserDto.getUserId());
+
+    if (chunkIndex == 0) {
+      FileInfoQuery infoQuery = new FileInfoQuery();
+      infoQuery.setFileMd5(fileMd5);
+      infoQuery.setSimplePage(new SimplePage(0, 1));
+      infoQuery.setStatus(FileStatusEnums.USING.getStatus());
+      List<FileInfo> dbFileList = fileInfoMapper.selectList(infoQuery);
+      // 文件秒传
+      if (!dbFileList.isEmpty()) {
+        FileInfo dbFile = dbFileList.get(0);
+        // 判断文件大小
+        if (dbFile.getFileSize() + userSpaceDto.getUseSpace() > userSpaceDto.getTotalSpace()) {
+          throw new BusinessException(ResponseCodeEnum.CODE_904);
+        }
+        dbFile.setFileId(fileId);
+        dbFile.setFilePid(filePid);
+        dbFile.setUserId(webUserDto.getUserId());
+        dbFile.setCreateTime(currDate);
+        dbFile.setLastUpdateTime(currDate);
+        dbFile.setStatus(FileStatusEnums.USING.getStatus());
+        dbFile.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        dbFile.setFileMd5(fileMd5);
+        // 重命名文件
+        fileName = autoRename(filePid, webUserDto.getUserId(), fileName);
+        dbFile.setFileName(fileName);
+        // 上传中
+        resultDto.setStatus(UploadStatusEnums.UPLOADING.getCode());
+        // 更新用户空间
+        updateUserSpace(webUserDto, dbFile.getFileSize());
+        return resultDto;
+      }
+    }
+
+    return resultDto;
+  }
+
+  /**
+   * 文件重命名
+   *
+   * @param filePid 文件父ID
+   * @param userId 用户ID
+   * @param fileName 文件名
+   * @return
+   */
+  private String autoRename(String filePid, String userId, String fileName) {
+    FileInfoQuery fileInfoQuery = new FileInfoQuery();
+    fileInfoQuery.setUserId(userId);
+    fileInfoQuery.setFilePid(filePid);
+    fileInfoQuery.setDelFlag(FileDelFlagEnums.USING.getFlag());
+    fileInfoQuery.setFileName(fileName);
+    // 如果有同名文件了，重命名
+    Integer count = this.fileInfoMapper.selectCount(fileInfoQuery);
+    if (count > 0) {
+      return StringTools.rename(fileName);
+    }
+
+    return fileName;
+  }
+
+  /**
+   * 更新用户空间
+   *
+   * @param webUserDto 用户信息
+   * @param useSpace 文件大小
+   */
+  private void updateUserSpace(SessionWebUserDto webUserDto, Long useSpace) {
+    Integer count = userInfoMapper.updateUserSpace(webUserDto.getUserId(), useSpace, null);
+    if (count == 0) {
+      throw new BusinessException(ResponseCodeEnum.CODE_904);
+    }
+    UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(webUserDto.getUserId());
+    userSpaceDto.setUseSpace(userSpaceDto.getUseSpace() + useSpace);
+    redisComponent.saveUserSpaceUse(webUserDto.getUserId(), userSpaceDto);
   }
 }

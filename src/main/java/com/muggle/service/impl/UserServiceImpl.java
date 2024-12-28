@@ -13,6 +13,7 @@ import com.muggle.entity.query.SimplePage;
 import com.muggle.entity.query.UserInfoQuery;
 import com.muggle.entity.vo.PaginationResultVO;
 import com.muggle.exception.BusinessException;
+import com.muggle.mappers.FileInfoMapper;
 import com.muggle.mappers.UserInfoMapper;
 import com.muggle.service.EmailCodeService;
 import com.muggle.service.UserService;
@@ -34,6 +35,8 @@ public class UserServiceImpl implements UserService {
 
   @Resource private RedisComponent redisComponent;
   @Autowired private AppConfig appConfig;
+  @Autowired
+  private FileInfoMapper fileInfoMapper;
 
   /** 根据条件查询列表 */
   @Override
@@ -197,8 +200,8 @@ public class UserServiceImpl implements UserService {
     }
     // 用户空间
     UserSpaceDto userSpaceDto = new UserSpaceDto();
-    // TODO 查询当前用户的使用的空间
-    userSpaceDto.setUseSpace(0L);
+    Long useSpace = fileInfoMapper.selectUseSpace(userInfo.getUserId());
+    userSpaceDto.setUseSpace(useSpace);
     userSpaceDto.setTotalSpace(userInfo.getTotalSpace());
     redisComponent.saveUserSpaceUse(userInfo.getUserId(), userSpaceDto);
     return sessionWebUserDto;
