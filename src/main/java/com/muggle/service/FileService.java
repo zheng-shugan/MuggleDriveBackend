@@ -46,4 +46,6 @@ public interface FileService {
       String fileMd5,
       Integer chunkIndex,
       Integer chunks);
+
+  FileInfo newFolder(String userId, String filePid, String folderName);
 }
