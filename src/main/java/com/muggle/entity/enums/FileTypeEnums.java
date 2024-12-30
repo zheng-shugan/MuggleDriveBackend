@@ -17,7 +17,7 @@ public enum FileTypeEnums {
       3,
       new String[] {
         ".jpeg", ".jpg", ".png", ".gif", ".bmp", ".dds", ".psd", ".pdt", ".webp", ".xmp", ".svg",
-        ".tiff"
+        ".tiff", "PNG", "JPG", "JPEG", "GIF", "BMP", "DDS", "PSD", "PDT", "WEBP", "XMP", "SVG",
       },
       "图片"),
   PDF(FileCategoryEnums.DOC, 4, new String[] {".pdf"}, "pdf"),
