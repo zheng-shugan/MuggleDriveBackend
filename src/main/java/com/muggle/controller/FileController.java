@@ -6,6 +6,7 @@ import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileDelFlagEnums;
+import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.PaginationResultVO;
@@ -114,16 +115,41 @@ public class FileController extends CommonFileController {
 
   /**
    * 获取普通文件
+   *
    * @param response
    * @param session
    * @param fileId
    */
   @RequestMapping("/getFile/{fileId}")
   public void getCommonFile(
-          HttpServletResponse response,
-          HttpSession session,
-          @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+      HttpServletResponse response,
+      HttpSession session,
+      @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
     SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
     getFileByFileIdAndUserId(response, fileId, userInfoFromSession.getUserId());
+  }
+
+  @RequestMapping("/newFolder")
+  public ResponseVO newFolder(
+      HttpSession session,
+      @VerifyParam(required = true) String fileId,
+      @VerifyParam(required = true) String filePid,
+      @VerifyParam(required = true) String fileName) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    FileInfo fileInfo = fileService.newFolder(userInfoFromSession.getUserId(), filePid, fileName);
+
+    return getSuccessResponseVO(fileInfo);
+  }
+
+  @RequestMapping(("/getFolderInfo"))
+  public ResponseVO getFolderInfo(
+      HttpSession session,
+      @VerifyParam(required = true) String path) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    return super.getFolderInfo(userInfoFromSession.getUserId(), path);
   }
 }

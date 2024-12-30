@@ -3,10 +3,16 @@ package com.muggle.controller;
 import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
 import com.muggle.entity.enums.FileCategoryEnums;
+import com.muggle.entity.enums.FileFolderTypeEnums;
 import com.muggle.entity.po.FileInfo;
+import com.muggle.entity.query.FileInfoQuery;
+import com.muggle.entity.vo.ResponseVO;
 import com.muggle.service.FileService;
 import com.muggle.utils.StringTools;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
+import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
@@ -93,5 +99,25 @@ public class CommonFileController extends ABaseController {
       }
     }
     readFile(response, filePath);
+  }
+
+
+  /**
+   * 获取目录信息
+   *
+   * @param userId
+   * @param path
+   * @return
+   */
+  public ResponseVO getFolderInfo(String userId, String path) {
+    String[] pathList = path.split("/");
+    FileInfoQuery query = new FileInfoQuery();
+    query.setUserId(userId);
+    query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+    query.setFileIdArray(pathList);
+    String orderBy = "field(file_id,\"" + StringUtils.join(pathList, "\",\"") + "\")";
+    query.setOrderBy(orderBy);
+    List<FileInfo> fileInfoList = fileService.findListByParam(query);
+    return getSuccessResponseVO(fileInfoList);
   }
 }
