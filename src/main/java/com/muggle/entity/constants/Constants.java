@@ -1,5 +1,7 @@
 package com.muggle.entity.constants;
 
+import java.io.File;
+
 public class Constants {
   public static final String ZERO_STR = "0";
 
@@ -25,9 +27,9 @@ public class Constants {
 
   public static final String SESSION_SHARE_KEY = "session_share_key_";
 
-  public static final String FILE_FOLDER_FILE = "/file/";
+  public static final String FILE_FOLDER_FILE = File.separator + "file" + File.separator;
 
-  public static final String FILE_FOLDER_TEMP = "/temp/";
+  public static final String FILE_FOLDER_TEMP = File.separator + "temp" + File.separator;
 
   public static final String IMAGE_PNG_SUFFIX = ".png";
 
@@ -41,7 +43,7 @@ public class Constants {
 
   public static final String AVATAR_SUFFIX = ".jpg";
 
-  public static final String FILE_FOLDER_AVATAR_NAME = "avatar/";
+  public static final String FILE_FOLDER_AVATAR_NAME = "avatar" + File.separator;
 
   public static final String AVATAR_DEFUALT = "default_avatar.jpg";
 

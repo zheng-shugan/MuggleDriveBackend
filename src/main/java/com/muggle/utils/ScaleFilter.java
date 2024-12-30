@@ -30,17 +30,30 @@ public class ScaleFilter {
     return false;
   }
 
+  /**
+   * 按照宽度百分比压缩图片
+   * @param sourceFile
+   * @param widthPercentage
+   * @param targetFile
+   */
   public static void compressImageWidthPercentage(
       File sourceFile, BigDecimal widthPercentage, File targetFile) {
     try {
       BigDecimal widthResult =
           widthPercentage.multiply(new BigDecimal(ImageIO.read(sourceFile).getWidth()));
       compressImage(sourceFile, widthResult.intValue(), targetFile, true);
+      logger.error("压缩图片成功");
     } catch (Exception e) {
-      logger.error("压缩图片失败");
+      logger.error("compressImageWidthPercentage:压缩图片失败");
     }
   }
 
+  /**
+   * 生成视频封面
+   * @param sourceFile
+   * @param width
+   * @param targetFile
+   */
   public static void createCover4Video(File sourceFile, Integer width, File targetFile) {
     try {
       String cmd = "ffmpeg -i %s -y -vframes 1 -vf scale=%d:%d/a %s";
@@ -48,11 +61,19 @@ public class ScaleFilter {
           String.format(
               cmd, sourceFile.getAbsoluteFile(), width, width, targetFile.getAbsoluteFile()),
           false);
+      logger.error("生成视频封面成功");
     } catch (Exception e) {
       logger.error("生成视频封面失败", e);
     }
   }
 
+  /**
+   * 压缩图片
+   * @param sourceFile
+   * @param width
+   * @param targetFile
+   * @param delSource
+   */
   public static void compressImage(
       File sourceFile, Integer width, File targetFile, Boolean delSource) {
     try {

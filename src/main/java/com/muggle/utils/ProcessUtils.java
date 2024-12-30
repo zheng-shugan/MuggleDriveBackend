@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class ProcessUtils {
   private static final Logger logger = LoggerFactory.getLogger(ProcessUtils.class);
 
-  public static String executeCommand(String cmd, Boolean outprintLog) throws BusinessException {
+  public static String executeCommand(String cmd, Boolean outpointLog) throws BusinessException {
     if (StringTools.isEmpty(cmd)) {
       logger.error("--- 指令执行失败，因为要执行的FFmpeg指令为空！ ---");
       return null;
@@ -34,7 +34,7 @@ public class ProcessUtils {
       String result = errorStream.stringBuffer.append(inputStream.stringBuffer + "\n").toString();
       // 输出执行的命令信息
 
-      if (outprintLog) {
+      if (outpointLog) {
         logger.info("执行命令:{}，已执行完毕,执行结果:{}", cmd, result);
       } else {
         logger.info("执行命令:{}，已执行完毕", cmd);

@@ -55,9 +55,9 @@ public class AppConfig {
   }
 
   public String getProjectFolder() {
-    if (!StringTools.isEmpty(projectFolder) && !projectFolder.endsWith("/")) {
-      projectFolder = projectFolder + "/";
-    }
+    // if (!StringTools.isEmpty(projectFolder) && !projectFolder.endsWith("/")) {
+    //   projectFolder = projectFolder + "/";
+    // }
     return projectFolder;
   }
 
