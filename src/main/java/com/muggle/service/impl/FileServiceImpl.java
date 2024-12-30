@@ -479,9 +479,10 @@ public class FileServiceImpl implements FileService {
         String.format(
             "ffmpeg -i %s -c:v copy -c:a copy -bsf:v h264_mp4toannexb -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename %s"
                 + File.separator
-                + "output_%%03d.ts %s/output.m3u8",
+                + "%s_%%03d.ts %s/index.m3u8",
             inputFilePath, // 输入文件路径
             outputFolderPath, // TS 文件输出目录
+            fileId, // 文件ID
             outputFolderPath // M3U8 文件输出目录
             );
 
