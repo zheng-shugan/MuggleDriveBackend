@@ -26,6 +26,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -575,5 +578,59 @@ public class FileServiceImpl implements FileService {
     fileInfo.setFileName(fileName);
     fileInfo.setLastUpdateTime(currDate);
     return fileInfo;
+  }
+
+  /**
+   * 移动文件
+   *
+   * @param fileIds
+   * @param filePid
+   * @param userId
+   */
+  @Override
+  public void changeFileFolder(String fileIds, String filePid, String userId) {
+    // 目录不变
+    if (fileIds.equals(filePid)) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    if (!filePid.equals(Constants.ZERO_STR)) {
+      // 父目录不存在
+      FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(filePid, userId);
+      if (fileInfo == null || !FileDelFlagEnums.USING.getFlag().equals(fileInfo.getDelFlag())) {
+        throw new BusinessException("父目录不存在");
+      }
+    }
+    // 移动文件
+    String[] fileIdList = fileIds.split(",");
+    FileInfoQuery query = new FileInfoQuery();
+    query.setFilePid(filePid);
+    query.setUserId(userId);
+    List<FileInfo> dbFileList = fileService.findListByParam(query);
+
+    // fileName 为 key，FileInfo 为 val
+    Map<String, FileInfo> dbFileNameMap =
+        dbFileList.stream()
+            .collect(
+                Collectors.toMap(
+                    FileInfo::getFileName, Function.identity(), (file1, file2) -> file2));
+    query = new FileInfoQuery();
+    query.setUserId(userId);
+    query.setFileIdArray(fileIdList);
+    // 被选中的文件
+    List<FileInfo> selectFileList = fileService.findListByParam(query);
+    // 修改选中文件的 filePid
+    for (FileInfo item: selectFileList) {
+      // 按文件名获取 FileInfo 对象
+      FileInfo rootFileInfo = dbFileNameMap.get(item.getFileName());
+      FileInfo updateInfo = new FileInfo();
+      if (rootFileInfo != null) {
+        // 重命名文件
+        String fileName = StringTools.rename(item.getFileName());
+        updateInfo.setFileName(fileName);
+      }
+      // 修改文件的 filePid
+      updateInfo.setFilePid(filePid);
+      this.fileInfoMapper.updateByFileIdAndUserId(updateInfo, item.getFileId(), userId);
+    }
   }
 }

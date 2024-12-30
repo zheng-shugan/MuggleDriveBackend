@@ -50,4 +50,6 @@ public interface FileService {
   FileInfo newFolder(String userId, String filePid, String folderName);
 
   FileInfo rename(String userId, String filePid, String fileId, String fileName);
+
+  public void changeFileFolder(String fileIds, String filePid, String userId);
 }

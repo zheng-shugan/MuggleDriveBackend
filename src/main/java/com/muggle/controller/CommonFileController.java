@@ -6,15 +6,16 @@ import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileFolderTypeEnums;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
+import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.service.FileService;
+import com.muggle.utils.CopyTools;
 import com.muggle.utils.StringTools;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.File;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang3.StringUtils;
 
 public class CommonFileController extends ABaseController {
   @Resource private AppConfig appConfig;
@@ -101,7 +102,6 @@ public class CommonFileController extends ABaseController {
     readFile(response, filePath);
   }
 
-
   /**
    * 获取目录信息
    *
@@ -118,6 +118,6 @@ public class CommonFileController extends ABaseController {
     String orderBy = "field(file_id,\"" + StringUtils.join(pathList, "\",\"") + "\")";
     query.setOrderBy(orderBy);
     List<FileInfo> fileInfoList = fileService.findListByParam(query);
-    return getSuccessResponseVO(fileInfoList);
+    return getSuccessResponseVO(CopyTools.copyList(fileInfoList, FileInfoVO.class));
   }
 }

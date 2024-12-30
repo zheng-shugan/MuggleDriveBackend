@@ -6,12 +6,16 @@ import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.dto.UploadResultDto;
 import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileDelFlagEnums;
+import com.muggle.entity.enums.FileFolderTypeEnums;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.PaginationResultVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.service.FileService;
+import com.muggle.utils.CopyTools;
+import com.muggle.utils.StringTools;
+import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -140,7 +144,7 @@ public class FileController extends CommonFileController {
 
     FileInfo fileInfo = fileService.newFolder(userInfoFromSession.getUserId(), filePid, fileName);
 
-    return getSuccessResponseVO(fileInfo);
+    return getSuccessResponseVO(CopyTools.copy(fileInfo, FileInfoVO.class));
   }
 
   @RequestMapping(("/getFolderInfo"))
@@ -160,8 +164,56 @@ public class FileController extends CommonFileController {
 
     SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
 
-    FileInfo fileInfo = fileService.rename(userInfoFromSession.getUserId(), filePid, fileId, fileName);
+    FileInfo fileInfo =
+        fileService.rename(userInfoFromSession.getUserId(), filePid, fileId, fileName);
 
-    return getSuccessResponseVO(fileInfo);
+    return getSuccessResponseVO(CopyTools.copy(fileInfo, FileInfoVO.class));
+  }
+
+  /**
+   * 获取所有目录
+   *
+   * @param session
+   * @param filePid
+   * @param currentFileIds
+   * @return
+   */
+  @RequestMapping(("/loadAllFolder"))
+  public ResponseVO loadAllFolder(
+      HttpSession session, @VerifyParam(required = true) String filePid, String currentFileIds) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    FileInfoQuery query = new FileInfoQuery();
+    query.setUserId(userInfoFromSession.getUserId());
+    query.setFilePid(filePid);
+    query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+    if (!StringTools.isEmpty(currentFileIds)) {
+      query.setExcludeFileIdArray(currentFileIds.split(","));
+    }
+    query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+    query.setOrderBy("create_time desc");
+    List<FileInfo> fileInfoList = fileService.findListByParam(query);
+
+    return getSuccessResponseVO(CopyTools.copyList(fileInfoList, FileInfoVO.class));
+  }
+
+  /**
+   * 改变目录
+   *
+   * @param session
+   * @param filePid
+   * @param fileIds
+   * @return
+   */
+  @RequestMapping(("/changeFileFolder"))
+  public ResponseVO changeFileFolder(
+      HttpSession session, String fileIds, @VerifyParam(required = true) String filePid) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    fileService.changeFileFolder(fileIds, filePid, userInfoFromSession.getUserId());
+
+    return getSuccessResponseVO(null);
   }
 }
