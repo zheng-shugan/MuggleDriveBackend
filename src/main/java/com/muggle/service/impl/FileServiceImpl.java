@@ -498,11 +498,7 @@ public class FileServiceImpl implements FileService {
    */
   @Override
   public FileInfo newFolder(String userId, String filePid, String folderName) {
-    boolean invalidName =
-        checkFileName(filePid, userId, folderName, FileFolderTypeEnums.FOLDER.getType());
-    if (invalidName) {
-      throw new BusinessException("已经存在同名文件，请修改文件名称重新上传");
-    }
+    checkFileName(filePid, userId, folderName, FileFolderTypeEnums.FOLDER.getType());
     Date currDate = new Date();
     FileInfo fileInfo = new FileInfo();
     fileInfo.setFileId(StringTools.getRandomString(Constants.LENGTH_10));
@@ -529,7 +525,7 @@ public class FileServiceImpl implements FileService {
    * @param fileType
    * @return
    */
-  private boolean checkFileName(String filePid, String userId, String fileName, Integer fileType) {
+  private void checkFileName(String filePid, String userId, String fileName, Integer fileType) {
     FileInfoQuery fileInfoQuery = new FileInfoQuery();
     fileInfoQuery.setFolderType(fileType);
     fileInfoQuery.setFileName(fileName);
@@ -539,8 +535,45 @@ public class FileServiceImpl implements FileService {
     // 如果有同名文件了，重命名
     Integer count = this.fileInfoMapper.selectCount(fileInfoQuery);
     if (count > 0) {
-      return true;
+      throw new BusinessException("文件名已存在");
     }
-    return false;
+  }
+
+  /**
+   * 文件重命名
+   *
+   * @param userId
+   * @param filePid
+   * @param fileId
+   * @param fileName
+   * @return
+   */
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public FileInfo rename(String userId, String filePid, String fileId, String fileName) {
+    FileInfo fileInfo = this.fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+    if (fileInfo == null) {
+      throw new BusinessException("文件不存在");
+    }
+
+    checkFileName(filePid, userId, fileName, fileInfo.getFileType());
+
+    Date currDate = new Date();
+    FileInfo dbFileInfo = new FileInfo();
+    dbFileInfo.setFileName(fileName);
+    dbFileInfo.setLastUpdateTime(currDate);
+    this.fileInfoMapper.updateByFileIdAndUserId(dbFileInfo, fileId, userId);
+
+    FileInfoQuery query = new FileInfoQuery();
+    query.setFilePid(filePid);
+    query.setFileName(fileName);
+    query.setUserId(userId);
+    Integer count = this.fileInfoMapper.selectCount(query);
+    if (count > 1) {
+      throw new BusinessException("文件名" + fileName + "已存在");
+    }
+    fileInfo.setFileName(fileName);
+    fileInfo.setLastUpdateTime(currDate);
+    return fileInfo;
   }
 }

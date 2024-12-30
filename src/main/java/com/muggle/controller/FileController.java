@@ -144,12 +144,24 @@ public class FileController extends CommonFileController {
   }
 
   @RequestMapping(("/getFolderInfo"))
-  public ResponseVO getFolderInfo(
-      HttpSession session,
-      @VerifyParam(required = true) String path) {
+  public ResponseVO getFolderInfo(HttpSession session, @VerifyParam(required = true) String path) {
 
     SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
 
     return super.getFolderInfo(userInfoFromSession.getUserId(), path);
+  }
+
+  @RequestMapping(("/rename"))
+  public ResponseVO rename(
+      HttpSession session,
+      @VerifyParam(required = true) String fileId,
+      @VerifyParam(required = true) String filePid,
+      @VerifyParam(required = true) String fileName) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    FileInfo fileInfo = fileService.rename(userInfoFromSession.getUserId(), filePid, fileId, fileName);
+
+    return getSuccessResponseVO(fileInfo);
   }
 }

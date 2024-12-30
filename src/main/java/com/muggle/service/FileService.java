@@ -48,4 +48,6 @@ public interface FileService {
       Integer chunks);
 
   FileInfo newFolder(String userId, String filePid, String folderName);
+
+  FileInfo rename(String userId, String filePid, String fileId, String fileName);
 }
