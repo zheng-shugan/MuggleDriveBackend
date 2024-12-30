@@ -18,6 +18,8 @@ import com.muggle.mappers.FileInfoMapper;
 import com.muggle.mappers.UserInfoMapper;
 import com.muggle.service.FileService;
 import com.muggle.utils.DateUtil;
+import com.muggle.utils.ProcessUtils;
+import com.muggle.utils.ScaleFilter;
 import com.muggle.utils.StringTools;
 import java.io.File;
 import java.io.IOException;
@@ -158,7 +160,7 @@ public class FileServiceImpl implements FileService {
       Date currDate = new Date();
       UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(webUserDto.getUserId());
 
-      // 如果只有一个分片，直接上传
+      // 文件秒传
       if (chunkIndex == 0) {
         FileInfoQuery infoQuery = new FileInfoQuery();
         infoQuery.setFileMd5(fileMd5);
@@ -209,11 +211,15 @@ public class FileServiceImpl implements FileService {
       File newFile = new File(tempFileFolder.getPath() + File.separator + chunkIndex);
       file.transferTo(newFile);
 
+      // 最后一个分片
       if (chunkIndex < chunks - 1) {
         resultDto.setStatus(UploadStatusEnums.UPLOADING.getCode());
         redisComponent.saveTempFileSize(webUserDto.getUserId(), fileId, file.getSize());
         return resultDto;
       }
+      // 不是最后一个分片也要把文件大小加上
+      redisComponent.saveTempFileSize(webUserDto.getUserId(), fileId, file.getSize());
+
       // 最后一个分片上传完，异步合并分片
       String month = DateUtil.format(new Date(), DateTimePatternEnum.YYYYMM.getPattern());
       String fileSuffix = StringTools.getFileSuffix(fileName);
@@ -326,26 +332,51 @@ public class FileServiceImpl implements FileService {
         return;
       }
       // 获取临时目录
-      String tempFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
-      String currUserFolderPath = userDto.getUserId() + fileInfo.getFileId();
-      File fileFolder = new File(tempFilePath + currUserFolderPath);
+      String tempFileName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
+      String currUserFolderName = userDto.getUserId() + fileInfo.getFileId();
+      File fileFolder = new File(tempFileName + currUserFolderName);
       if (!fileFolder.exists()) {
         return;
       }
       String fileSuffix = StringTools.getFileSuffix(fileInfo.getFileName());
       String month = DateUtil.format(new Date(), DateTimePatternEnum.YYYYMM.getPattern());
       // 目标目录
-      String targetFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE + month;
-      File targetFolder = new File(targetFolderName);
+      String targetFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
+      File targetFolder = new File(targetFolderName + month);
       if (!targetFolder.exists()) {
         targetFolder.mkdir();
       }
       // 目标文件
-      String newFileName = currUserFolderPath + fileSuffix;
-      targetFilePath = targetFolderName + File.separator + newFileName;
+      String newFileName = currUserFolderName + fileSuffix;
+      // 真正的文件路径
+      targetFilePath = targetFolder.getPath() + File.separator + newFileName;
 
       // 合并文件
       unionFile(fileFolder.getPath(), targetFilePath, fileInfo.getFileName(), true);
+
+      // 视频文件分片
+      fileTypeEnums = FileTypeEnums.getFileTypeBySuffix(fileSuffix);
+      if (fileTypeEnums == FileTypeEnums.VIDEO) {
+        // 视频分片
+        splitFile4Video(fileId, targetFilePath);
+        // 缩略图
+        coverImagePath = month + File.separator + currUserFolderName + Constants.IMAGE_PNG_SUFFIX;
+        String coverPath = targetFolderName + File.separator + coverImagePath;
+        ScaleFilter.createCover4Video(
+            new File(targetFilePath), Constants.LENGTH_150, new File(coverPath));
+      } else if (fileTypeEnums == FileTypeEnums.IMAGE) {
+        // 图片的缩略图
+        coverImagePath = month + File.separator + newFileName.replace(".", "_.");
+        String coverPath = targetFolderName + File.separator + coverImagePath;
+        Boolean aBoolean =
+            ScaleFilter.createThumbnailWidthFFmpeg(
+                new File(targetFilePath), Constants.LENGTH_150, new File(coverPath), false);
+        // 创建缩略图失败，直接复制文件
+        if (!aBoolean) {
+          FileUtils.copyFile(new File(targetFilePath), new File(coverPath));
+        }
+      }
+
     } catch (Exception e) {
       logger.error("文件转码失败，文件id:{}, 用户id:{}", fileId, userDto.getUserId(), e);
       transferSuccess = false;
@@ -423,5 +454,37 @@ public class FileServiceImpl implements FileService {
         }
       }
     }
+  }
+
+  /**
+   * 视频文件分片
+   *
+   * @param fileId 文件ID
+   * @param videoFilePath 视频文件路径
+   */
+  public void splitFile4Video(String fileId, String videoFilePath) {
+    // 创建同名切片目录
+    File tsFolder = new File(videoFilePath.substring(0, videoFilePath.lastIndexOf(".")));
+    if (!tsFolder.exists()) {
+      if (!tsFolder.mkdir()) {
+        System.err.println("Failed to create directory: " + tsFolder.getPath());
+        return;
+      }
+    }
+
+    String inputFilePath = videoFilePath;
+    String outputFolderPath = tsFolder.getPath();
+
+    String command =
+        String.format(
+            "ffmpeg -i %s -c:v copy -c:a copy -bsf:v h264_mp4toannexb -f hls -hls_time 10 -hls_list_size 0 -hls_segment_filename %s"
+                + File.separator
+                + "output_%%03d.ts %s/output.m3u8",
+            inputFilePath, // 输入文件路径
+            outputFolderPath, // TS 文件输出目录
+            outputFolderPath // M3U8 文件输出目录
+            );
+
+    ProcessUtils.executeCommand(command, false);
   }
 }
