@@ -82,6 +82,7 @@ public class FileController extends CommonFileController {
 
   /**
    * 获取图片
+   *
    * @param response
    * @param imageFolder
    * @param imageName
@@ -93,5 +94,36 @@ public class FileController extends CommonFileController {
       @PathVariable("imageFolder") String imageFolder,
       @PathVariable("imageName") String imageName) {
     getImageByFolderAndName(response, imageFolder, imageName);
+  }
+
+  /**
+   * 获取视频信息
+   *
+   * @param response
+   * @param session
+   * @param fileId
+   */
+  @RequestMapping("/ts/getVideoInfo/{fileId}")
+  public void getVideoInfo(
+      HttpServletResponse response,
+      HttpSession session,
+      @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+    getFileByFileIdAndUserId(response, fileId, userInfoFromSession.getUserId());
+  }
+
+  /**
+   * 获取普通文件
+   * @param response
+   * @param session
+   * @param fileId
+   */
+  @RequestMapping("/getFile/{fileId}")
+  public void getCommonFile(
+          HttpServletResponse response,
+          HttpSession session,
+          @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+    getFileByFileIdAndUserId(response, fileId, userInfoFromSession.getUserId());
   }
 }
