@@ -52,4 +52,6 @@ public interface FileService {
   FileInfo rename(String userId, String filePid, String fileId, String fileName);
 
   public void changeFileFolder(String fileIds, String filePid, String userId);
+
+  public void removeFile2RecycleBatch(String userId, String fileIds);
 }
