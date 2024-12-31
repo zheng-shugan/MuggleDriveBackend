@@ -17,6 +17,7 @@ import com.muggle.utils.CopyTools;
 import com.muggle.utils.StringTools;
 import java.util.List;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -215,5 +216,31 @@ public class FileController extends CommonFileController {
     fileService.changeFileFolder(fileIds, filePid, userInfoFromSession.getUserId());
 
     return getSuccessResponseVO(null);
+  }
+
+  /**
+   * 获取下载链接
+   *
+   * @param session
+   * @param fileId
+   * @return
+   */
+  @RequestMapping(("/createDownloadUrl/{fileId}"))
+  public ResponseVO createDownloadUrl(
+      HttpSession session, @VerifyParam(required = true) @PathVariable("fileId") String fileId) {
+
+    SessionWebUserDto userInfoFromSession = getUserInfoFromSession(session);
+
+    ResponseVO downloadUrl = super.createDownloadUrl(fileId, userInfoFromSession.getUserId());
+
+    return getSuccessResponseVO(downloadUrl);
+  }
+
+  @RequestMapping("/download/{code}")
+  @GlobalInterceptor(checkParam = true, checkLogin = false)
+  public void downloadFile(
+      HttpServletRequest request, HttpServletResponse response, @PathVariable("code") String code)
+      throws Exception {
+    super.downloadFile(request, response, code);
   }
 }

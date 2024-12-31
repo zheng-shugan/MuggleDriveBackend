@@ -1,6 +1,7 @@
 package com.muggle.component;
 
 import com.muggle.entity.constants.Constants;
+import com.muggle.entity.dto.DownloadFileDto;
 import com.muggle.entity.dto.SysSettingsDto;
 import com.muggle.entity.dto.UserSpaceDto;
 import com.muggle.mappers.FileInfoMapper;
@@ -64,6 +65,7 @@ public class RedisComponent {
 
   /**
    * 保存临时文件大小
+   *
    * @param userId
    * @param fileId
    * @param fileSize
@@ -107,5 +109,26 @@ public class RedisComponent {
     }
 
     return 0L;
+  }
+
+  /**
+   * 保存下载链接
+   *
+   * @param code
+   * @param downloadFileDto
+   */
+  public void saveDownloadCode(String code, DownloadFileDto downloadFileDto) {
+    redisUtils.setex(
+        Constants.REDIS_KEY_DOWNLOAD + code, downloadFileDto, Constants.REDIS_KEY_EXPIRES_FIVE_MIN);
+  }
+
+  /**
+   * 获取下载链接
+   *
+   * @param code
+   * @return
+   */
+  public DownloadFileDto getDownloadCode(String code) {
+    return (DownloadFileDto) redisUtils.get(Constants.REDIS_KEY_DOWNLOAD + code);
   }
 }

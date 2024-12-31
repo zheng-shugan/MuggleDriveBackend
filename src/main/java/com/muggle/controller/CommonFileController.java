@@ -1,19 +1,25 @@
 package com.muggle.controller;
 
+import com.muggle.component.RedisComponent;
 import com.muggle.entity.config.AppConfig;
 import com.muggle.entity.constants.Constants;
+import com.muggle.entity.dto.DownloadFileDto;
 import com.muggle.entity.enums.FileCategoryEnums;
 import com.muggle.entity.enums.FileFolderTypeEnums;
+import com.muggle.entity.enums.ResponseCodeEnum;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.ResponseVO;
+import com.muggle.exception.BusinessException;
 import com.muggle.service.FileService;
 import com.muggle.utils.CopyTools;
 import com.muggle.utils.StringTools;
 import java.io.File;
+import java.net.URLEncoder;
 import java.util.List;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,6 +27,8 @@ public class CommonFileController extends ABaseController {
   @Resource private AppConfig appConfig;
 
   @Resource private FileService fileService;
+
+  @Resource private RedisComponent redisComponent;
 
   /**
    * 根据路径和图片名字获取图片
@@ -119,5 +127,58 @@ public class CommonFileController extends ABaseController {
     query.setOrderBy(orderBy);
     List<FileInfo> fileInfoList = fileService.findListByParam(query);
     return getSuccessResponseVO(CopyTools.copyList(fileInfoList, FileInfoVO.class));
+  }
+
+  /**
+   * 获取下载链接
+   *
+   * @param userId
+   * @param fileId
+   * @return
+   */
+  protected ResponseVO createDownloadUrl(String fileId, String userId) {
+    FileInfo fileInfo = fileService.getFileInfoByFileIdAndUserId(fileId, userId);
+
+    // 如果文件不存在或者是下载的是文件夹
+    if (fileInfo == null || FileFolderTypeEnums.FOLDER.getType().equals(fileInfo.getFolderType())) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    // 创建下载链接
+    String code = StringTools.getRandomString(Constants.LENGTH_50);
+
+    DownloadFileDto downloadFileDto = new DownloadFileDto();
+    downloadFileDto.setDownloadCode(code);
+    downloadFileDto.setFileId(fileId);
+    downloadFileDto.setFilePath(fileInfo.getFilePath());
+    downloadFileDto.setFileName(fileInfo.getFileName());
+    // 保存到 redis
+    redisComponent.saveDownloadCode(code, downloadFileDto);
+    return getSuccessResponseVO(code);
+  }
+
+  /**
+   * 下载文件
+   * @param request
+   * @param response
+   * @param code
+   * @throws Exception
+   */
+    protected void downloadFile(HttpServletRequest request, HttpServletResponse response, String code)
+      throws Exception {
+    DownloadFileDto downloadFileDto = redisComponent.getDownloadCode(code);
+    if (null == downloadFileDto) {
+      return;
+    }
+    String filePath =
+        appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE + downloadFileDto.getFilePath();
+    String fileName = downloadFileDto.getFileName();
+    response.setContentType("application/x-msdownload; charset=UTF-8");
+    if (request.getHeader("User-Agent").toLowerCase().indexOf("msie") > 0) { // IE浏览器
+      fileName = URLEncoder.encode(fileName, "UTF-8");
+    } else {
+      fileName = new String(fileName.getBytes("UTF-8"), "ISO8859-1");
+    }
+    response.setHeader("Content-Disposition", "attachment;filename=\"" + fileName + "\"");
+    readFile(response, filePath);
   }
 }
