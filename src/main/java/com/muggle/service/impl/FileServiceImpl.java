@@ -763,4 +763,52 @@ public class FileServiceImpl implements FileService {
       }
     }
   }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void delFileBatch(String userId, String fileIds, Boolean isAdminOperate) {
+    String[] fileIdArray = fileIds.split(",");
+    FileInfoQuery query = new FileInfoQuery();
+    query.setUserId(userId);
+    query.setFileIdArray(fileIdArray);
+    // 是否是管理员操作
+    if (!isAdminOperate) {
+      query.setDelFlag(FileDelFlagEnums.RECYCLE.getFlag());
+    }
+    List<FileInfo> fileInfoList = this.fileInfoMapper.selectList(query);
+    List<String> delFileSubFolderFileIdList = new ArrayList<>();
+    // 找到所选文件子目录文件ID
+    for (FileInfo fileInfo : fileInfoList) {
+      if (FileFolderTypeEnums.FOLDER.getType().equals(fileInfo.getFolderType())) {
+        findAllSubFolderFileIdList(
+            delFileSubFolderFileIdList,
+            userId,
+            fileInfo.getFileId(),
+            FileDelFlagEnums.DEL.getFlag());
+      }
+    }
+    // 删除所选文件，子目录中的文件
+    if (!delFileSubFolderFileIdList.isEmpty()) {
+      this.fileInfoMapper.delFileBatch(
+          userId,
+          delFileSubFolderFileIdList,
+          null,
+          isAdminOperate ? null : FileDelFlagEnums.DEL.getFlag());
+    }
+    // 删除所选文件
+    this.fileInfoMapper.delFileBatch(
+        userId,
+        null,
+        Arrays.asList(fileIdArray),
+        isAdminOperate ? null : FileDelFlagEnums.RECYCLE.getFlag());
+    // 更新用户使用空间
+    Long useSpace = this.fileInfoMapper.selectUseSpace(userId);
+    UserInfo userInfo = new UserInfo();
+    userInfo.setUseSpace(useSpace);
+    this.userInfoMapper.updateByUserId(userInfo, userId);
+    // 更新缓存
+    UserSpaceDto userSpaceDto = redisComponent.getUserSpaceDto(userId);
+    userSpaceDto.setUseSpace(useSpace);
+    redisComponent.saveUserSpaceUse(userId, userSpaceDto);
+  }
 }

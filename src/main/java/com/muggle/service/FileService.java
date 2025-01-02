@@ -56,4 +56,6 @@ public interface FileService {
   public void removeFile2RecycleBatch(String userId, String fileIds);
 
   public void recoverFileBatch(String userId, String fileIds);
+
+  void delFileBatch(String userId, String fileIds, Boolean isAdminOperate);
 }

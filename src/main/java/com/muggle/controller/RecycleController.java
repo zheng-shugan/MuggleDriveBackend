@@ -10,15 +10,12 @@ import com.muggle.entity.vo.FileInfoVO;
 import com.muggle.entity.vo.PaginationResultVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.service.FileService;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
-
-/**
- * 回收站
- */
+/** 回收站 */
 @RestController("RecycleController")
 @RequestMapping("/recycle")
 public class RecycleController extends ABaseController {
@@ -39,6 +36,7 @@ public class RecycleController extends ABaseController {
 
   /**
    * 从回收站恢复文件
+   *
    * @param session
    * @param fileIds
    * @return
@@ -48,6 +46,21 @@ public class RecycleController extends ABaseController {
   public ResponseVO recoverFile(HttpSession session, @VerifyParam(required = true) String fileIds) {
     SessionWebUserDto webUserDto = getUserInfoFromSession(session);
     fileService.recoverFileBatch(webUserDto.getUserId(), fileIds);
+    return getSuccessResponseVO(null);
+  }
+
+  /**
+   * 彻底删除文件
+   *
+   * @param session
+   * @param fileIds
+   * @return
+   */
+  @RequestMapping("/delFile")
+  @GlobalInterceptor(checkParam = true)
+  public ResponseVO delFile(HttpSession session, @VerifyParam(required = true) String fileIds) {
+    SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+    fileService.delFileBatch(webUserDto.getUserId(), fileIds, false);
     return getSuccessResponseVO(null);
   }
 }
