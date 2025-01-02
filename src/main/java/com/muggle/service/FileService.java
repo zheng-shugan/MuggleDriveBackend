@@ -54,4 +54,6 @@ public interface FileService {
   public void changeFileFolder(String fileIds, String filePid, String userId);
 
   public void removeFile2RecycleBatch(String userId, String fileIds);
+
+  public void recoverFileBatch(String userId, String fileIds);
 }

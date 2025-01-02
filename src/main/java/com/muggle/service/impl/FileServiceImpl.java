@@ -652,21 +652,24 @@ public class FileServiceImpl implements FileService {
     }
     List<String> delFilePidList = new ArrayList<>();
     for (FileInfo fileInfo : fileInfoList) {
-      findAllSubFolderFileIdList(delFilePidList, userId, fileInfo.getFileId(), FileDelFlagEnums.USING.getFlag());
+      findAllSubFolderFileIdList(
+          delFilePidList, userId, fileInfo.getFileId(), FileDelFlagEnums.USING.getFlag());
     }
-    //将目录下的所有文件更新为已删除
+    // 将目录下的所有文件更新为已删除
     if (!delFilePidList.isEmpty()) {
       FileInfo updateInfo = new FileInfo();
       updateInfo.setDelFlag(FileDelFlagEnums.DEL.getFlag());
-      this.fileInfoMapper.updateFileDelFlagBatch(updateInfo, userId, delFilePidList, null, FileDelFlagEnums.USING.getFlag());
+      this.fileInfoMapper.updateFileDelFlagBatch(
+          updateInfo, userId, delFilePidList, null, FileDelFlagEnums.USING.getFlag());
     }
 
-    //将选中的文件更新为回收站
+    // 将选中的文件更新为回收站
     List<String> delFileIdList = Arrays.asList(fileIdArray);
     FileInfo fileInfo = new FileInfo();
     fileInfo.setRecoveryTime(new Date());
     fileInfo.setDelFlag(FileDelFlagEnums.RECYCLE.getFlag());
-    this.fileInfoMapper.updateFileDelFlagBatch(fileInfo, userId, null, delFileIdList, FileDelFlagEnums.USING.getFlag());
+    this.fileInfoMapper.updateFileDelFlagBatch(
+        fileInfo, userId, null, delFileIdList, FileDelFlagEnums.USING.getFlag());
   }
 
   /**
@@ -692,6 +695,72 @@ public class FileServiceImpl implements FileService {
     for (FileInfo fileInfo : fileInfoList) {
       // 递归的查询目录下的文件
       findAllSubFolderFileIdList(fileIdList, userId, fileInfo.getFileId(), delFlag);
+    }
+  }
+
+  /** 根据 id 批量恢复文件 */
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void recoverFileBatch(String userId, String fileIds) {
+    String[] fileIdArray = fileIds.split(",");
+    FileInfoQuery query = new FileInfoQuery();
+    query.setUserId(userId);
+    query.setFileIdArray(fileIdArray);
+    query.setDelFlag(FileDelFlagEnums.RECYCLE.getFlag());
+    List<FileInfo> fileInfoList = this.fileInfoMapper.selectList(query);
+    if (fileInfoList.isEmpty()) {
+      return;
+    }
+
+    // 被删除的目录及其子目录的文件ID
+    List<String> delFileSubFolderFileIdList = new ArrayList<>();
+    for (FileInfo fileInfo : fileInfoList) {
+      // 如果被删除的是目录，查找改目录下的所有子目录和文件
+      if (FileFolderTypeEnums.FOLDER.getType().equals(fileInfo.getFolderType())) {
+        findAllSubFolderFileIdList(
+            delFileSubFolderFileIdList,
+            userId,
+            fileInfo.getFileId(),
+            FileDelFlagEnums.DEL.getFlag());
+      }
+    }
+    // 查询所有根目录的文件
+    query = new FileInfoQuery();
+    query.setUserId(userId);
+    query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+    query.setFilePid(Constants.ZERO_STR);
+    List<FileInfo> allRootFileList = fileInfoMapper.selectList(query);
+
+    Map<String, FileInfo> rootFileMap =
+        allRootFileList.stream()
+            .collect(
+                Collectors.toMap(
+                    FileInfo::getFileName, Function.identity(), (file1, file2) -> file2));
+
+    // 查询所选文件
+    if (!delFileSubFolderFileIdList.isEmpty()) {
+      FileInfo fileInfo = new FileInfo();
+      fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+      fileInfoMapper.updateFileDelFlagBatch(
+          fileInfo, userId, delFileSubFolderFileIdList, null, FileDelFlagEnums.DEL_REAL.getFlag());
+    }
+    // 将选中文件更新为使用中
+    List<String> delFileIdList = Arrays.asList(fileIdArray);
+    FileInfo fileInfo = new FileInfo();
+    fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+    fileInfo.setFilePid(Constants.ZERO_STR);
+    fileInfo.setLastUpdateTime(new Date());
+    this.fileInfoMapper.updateFileDelFlagBatch(
+        fileInfo, userId, null, delFileIdList, FileDelFlagEnums.RECYCLE.getFlag());
+    // 如果目录名字重复
+    for (FileInfo item : fileInfoList) {
+      FileInfo rootFileInfo = rootFileMap.get(item.getFileName());
+      if (rootFileInfo != null) {
+        String fileName = StringTools.rename(item.getFileName());
+        FileInfo updateInfo = new FileInfo();
+        updateInfo.setFileName(fileName);
+        this.fileInfoMapper.updateByFileIdAndUserId(updateInfo, item.getFileId(), userId);
+      }
     }
   }
 }
