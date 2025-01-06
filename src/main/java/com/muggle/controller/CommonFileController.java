@@ -10,6 +10,7 @@ import com.muggle.entity.enums.ResponseCodeEnum;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.query.FileInfoQuery;
 import com.muggle.entity.vo.FileInfoVO;
+import com.muggle.entity.vo.FolderVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.exception.BusinessException;
 import com.muggle.service.FileService;
@@ -126,7 +127,7 @@ public class CommonFileController extends ABaseController {
     String orderBy = "field(file_id,\"" + StringUtils.join(pathList, "\",\"") + "\")";
     query.setOrderBy(orderBy);
     List<FileInfo> fileInfoList = fileService.findListByParam(query);
-    return getSuccessResponseVO(CopyTools.copyList(fileInfoList, FileInfoVO.class));
+    return getSuccessResponseVO(CopyTools.copyList(fileInfoList, FolderVO.class));
   }
 
   /**

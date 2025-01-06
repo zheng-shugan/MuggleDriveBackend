@@ -13,12 +13,15 @@ import com.muggle.entity.vo.UserInfoVO;
 import com.muggle.service.FileService;
 import com.muggle.service.UserService;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/admin")
-public class AdminController extends ABaseController {
+public class AdminController extends CommonFileController {
 
   @Resource private RedisComponent redisComponent;
 
@@ -115,5 +118,85 @@ public class AdminController extends ABaseController {
     query.setDelFlag(FileDelFlagEnums.USING.getFlag());
     PaginationResultVO resultVO = fileInfoService.findListByPage(query);
     return getSuccessResponseVO(resultVO);
+  }
+
+  @RequestMapping("/getFolderInfo")
+  @GlobalInterceptor(checkLogin = false, checkAdmin = true, checkParam = true)
+  public ResponseVO getFolderInfo(@VerifyParam(required = true) String path) {
+    return super.getFolderInfo(null, path);
+  }
+
+  @RequestMapping("/getFile/{userId}/{fileId}")
+  @GlobalInterceptor(checkParam = true, checkAdmin = true)
+  public void getFile(
+      HttpServletResponse response,
+      @PathVariable("userId") @VerifyParam(required = true) String userId,
+      @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+    super.getFileByFileIdAndUserId(response, fileId, userId);
+  }
+
+  /**
+   * 获取视频信息
+   *
+   * @param response
+   * @param userId
+   * @param fileId
+   */
+  @RequestMapping("/ts/getVideoInfo/{userId}/{fileId}")
+  @GlobalInterceptor(checkParam = true, checkAdmin = true)
+  public void getVideoInfo(
+      HttpServletResponse response,
+      @PathVariable("userId") @VerifyParam(required = true) String userId,
+      @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+    super.getFileByFileIdAndUserId(response, fileId, userId);
+  }
+
+  /**
+   * 创建下载链接
+   *
+   * @param userId
+   * @param fileId
+   * @return
+   */
+  @RequestMapping("/createDownloadUrl/{userId}/{fileId}")
+  @GlobalInterceptor(checkParam = true, checkAdmin = true)
+  public ResponseVO createDownloadUrl(
+      @PathVariable("userId") @VerifyParam(required = true) String userId,
+      @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+    return super.createDownloadUrl(fileId, userId);
+  }
+
+  /**
+   * 下载文件
+   *
+   * @param request
+   * @param response
+   * @throws Exception
+   */
+  @RequestMapping("/download/{code}")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public void download(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      @PathVariable("code") @VerifyParam(required = true) String code)
+      throws Exception {
+    super.downloadFile(request, response, code);
+  }
+
+  /**
+   * 删除文件
+   *
+   * @param fileIdAndUserIds
+   * @return
+   */
+  @RequestMapping("/delFile")
+  @GlobalInterceptor(checkParam = true, checkAdmin = true)
+  public ResponseVO delFile(@VerifyParam(required = true) String fileIdAndUserIds) {
+    String[] fileIdAndUserIdArray = fileIdAndUserIds.split(",");
+    for (String fileIdAndUserId : fileIdAndUserIdArray) {
+      String[] itemArray = fileIdAndUserId.split("_");
+      fileInfoService.delFileBatch(itemArray[0], itemArray[1], true);
+    }
+    return getSuccessResponseVO(null);
   }
 }
