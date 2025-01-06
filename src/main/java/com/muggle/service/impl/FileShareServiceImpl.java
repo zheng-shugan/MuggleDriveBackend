@@ -1,6 +1,7 @@
 package com.muggle.service.impl;
 
 import com.muggle.entity.constants.Constants;
+import com.muggle.entity.dto.SessionShareDto;
 import com.muggle.entity.enums.PageSize;
 import com.muggle.entity.enums.ResponseCodeEnum;
 import com.muggle.entity.enums.ShareValidTypeEnums;
@@ -125,5 +126,28 @@ public class FileShareServiceImpl implements FileShareService {
     if (count != shareIdArray.length) {
       throw new BusinessException(ResponseCodeEnum.CODE_600);
     }
+  }
+
+  @Override
+  public SessionShareDto checkShareCode(String shareId, String shareCode) {
+    FileShare fileShare = this.fileShareMapper.selectByShareId(shareId);
+    // 如果分享信息不存在或者分享码不正确
+    if (fileShare == null
+        || (fileShare.getExpireTime() != null && fileShare.getExpireTime().before(new Date()))) {
+      throw new BusinessException(ResponseCodeEnum.CODE_902);
+    }
+    if (!fileShare.getCode().equals(shareCode)) {
+      throw new BusinessException("提取码错误");
+    }
+    // 更新浏览次数
+    this.fileShareMapper.updateShareShowCount(shareId);
+
+    SessionShareDto sessionShareDto = new SessionShareDto();
+    sessionShareDto.setShareId(shareId);
+    sessionShareDto.setShareUserId(fileShare.getUserId());
+    sessionShareDto.setFileId(fileShare.getFileId());
+    sessionShareDto.setExpireTime(sessionShareDto.getExpireTime());
+
+    return sessionShareDto;
   }
 }

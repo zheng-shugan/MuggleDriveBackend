@@ -1,5 +1,6 @@
 package com.muggle.service;
 
+import com.muggle.entity.dto.SessionShareDto;
 import com.muggle.entity.po.FileShare;
 import com.muggle.entity.query.FileShareQuery;
 import com.muggle.entity.vo.PaginationResultVO;
@@ -49,4 +50,13 @@ public interface FileShareService {
    * @param userId
    */
   void deleteFileShareBatch(String[] shareIdArray, String userId);
+
+  /**
+   * 检查分享码
+   *
+   * @param shareId
+   * @param shareCode
+   * @return
+   */
+  SessionShareDto checkShareCode(String shareId, String shareCode);
 }
