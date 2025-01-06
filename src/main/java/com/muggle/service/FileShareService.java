@@ -34,4 +34,10 @@ public interface FileShareService {
 
   /** 根据ShareId删除 */
   Integer deleteFileShareByShareId(String shareId);
+
+  /**
+   * 分享文件
+   * @param fileShare
+   */
+  void saveShare(FileShare fileShare);
 }

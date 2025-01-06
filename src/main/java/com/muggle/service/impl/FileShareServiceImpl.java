@@ -1,14 +1,24 @@
 package com.muggle.service.impl;
 
+import com.muggle.entity.constants.Constants;
 import com.muggle.entity.enums.PageSize;
+import com.muggle.entity.enums.ResponseCodeEnum;
+import com.muggle.entity.enums.ShareValidTypeEnums;
 import com.muggle.entity.po.FileShare;
 import com.muggle.entity.query.FileShareQuery;
 import com.muggle.entity.query.SimplePage;
 import com.muggle.entity.vo.PaginationResultVO;
+import com.muggle.exception.BusinessException;
 import com.muggle.mappers.FileShareMapper;
 import com.muggle.service.FileShareService;
+import com.muggle.utils.DateUtil;
+
+import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
+
+import com.muggle.utils.StringTools;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 /** 分享信息 业务接口实现 */
@@ -84,5 +94,27 @@ public class FileShareServiceImpl implements FileShareService {
   @Override
   public Integer deleteFileShareByShareId(String shareId) {
     return this.fileShareMapper.deleteByShareId(shareId);
+  }
+
+  @Override
+  public void saveShare(FileShare fileShare) {
+    ShareValidTypeEnums typeEnums = ShareValidTypeEnums.getByType(fileShare.getValidType());
+    // 请求类型错误
+    if (typeEnums == null) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    // 如果文件不是永久分享
+    if (typeEnums != ShareValidTypeEnums.FOREVER) {
+      fileShare.setExpireTime(DateUtil.getAfterDate(typeEnums.getDays()));
+    }
+    Date currDate = new Date();
+    fileShare.setShareTime(currDate);
+    // 系统生成验证码
+    if (StringUtils.isEmpty(fileShare.getCode())) {
+      fileShare.setCode(StringTools.getRandomString(Constants.LENGTH_5));
+    }
+    fileShare.setShareId(StringTools.getRandomString(Constants.LENGTH_20));
+    fileShare.setShowCount(Constants.ZERO);
+    this.fileShareMapper.insert(fileShare);
   }
 }
