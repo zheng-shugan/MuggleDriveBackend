@@ -809,4 +809,45 @@ public class FileServiceImpl implements FileService {
     userSpaceDto.setUseSpace(useSpace);
     redisComponent.saveUserSpaceUse(userId, userSpaceDto);
   }
+
+  /**
+   * 检查根目录
+   *
+   * @param rootFilePid
+   * @param userId
+   * @param fileId
+   */
+  @Override
+  public void checkRootFilePid(String rootFilePid, String userId, String fileId) {
+    if(StringTools.isEmpty(fileId)) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    if (rootFilePid.equals(fileId)) {
+      return;
+    }
+    checkFilePid(rootFilePid, fileId, userId);
+  }
+
+  /**
+   * 校验文件目录
+   *
+   * @param rootFilePid
+   * @param fileId
+   * @param userId
+   */
+  private void checkFilePid(String rootFilePid, String fileId, String userId) {
+    FileInfo fileInfo = this.fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+
+    if (fileInfo == null) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    // 如果是根目录
+    if (Constants.ZERO.equals(fileInfo.getFilePid())) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
+    if (fileInfo.getFilePid().equals(rootFilePid)) {
+      return;
+    }
+    checkFilePid(rootFilePid, fileInfo.getFilePid(), userId);
+  }
 }

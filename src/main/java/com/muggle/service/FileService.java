@@ -58,4 +58,13 @@ public interface FileService {
   public void recoverFileBatch(String userId, String fileIds);
 
   void delFileBatch(String userId, String fileIds, Boolean isAdminOperate);
+
+  /**
+   * 检查根文件夹
+   *
+   * @param rootFilePid
+   * @param userId
+   * @param fileId
+   */
+  void checkRootFilePid(String rootFilePid, String userId, String fileId);
 }

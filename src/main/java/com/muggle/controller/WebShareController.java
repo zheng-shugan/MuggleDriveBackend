@@ -6,10 +6,14 @@ import com.muggle.entity.constants.Constants;
 import com.muggle.entity.dto.SessionShareDto;
 import com.muggle.entity.dto.SessionWebUserDto;
 import com.muggle.entity.enums.FileDelFlagEnums;
+import com.muggle.entity.enums.FileStatusEnums;
 import com.muggle.entity.enums.ResponseCodeEnum;
 import com.muggle.entity.po.FileInfo;
 import com.muggle.entity.po.FileShare;
 import com.muggle.entity.po.UserInfo;
+import com.muggle.entity.query.FileInfoQuery;
+import com.muggle.entity.vo.FileInfoVO;
+import com.muggle.entity.vo.PaginationResultVO;
 import com.muggle.entity.vo.ResponseVO;
 import com.muggle.entity.vo.ShareInfoVO;
 import com.muggle.exception.BusinessException;
@@ -20,6 +24,8 @@ import com.muggle.utils.CopyTools;
 import java.util.Date;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+
+import com.muggle.utils.StringTools;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -63,6 +69,7 @@ public class WebShareController extends CommonFileController {
 
   /**
    * 获取分享信息
+   *
    * @param shareId
    * @return
    */
@@ -102,12 +109,71 @@ public class WebShareController extends CommonFileController {
    */
   @RequestMapping("/checkShareCode")
   @GlobalInterceptor(checkLogin = false, checkParam = true)
-  public ResponseVO checkShareCode(HttpSession session,
-                                   @VerifyParam(required = true) String shareId,
-                                   @VerifyParam(required = true) String code) {
+  public ResponseVO checkShareCode(
+      HttpSession session,
+      @VerifyParam(required = true) String shareId,
+      @VerifyParam(required = true) String code) {
     SessionShareDto shareSessionDto = fileShareService.checkShareCode(shareId, code);
     session.setAttribute(Constants.SESSION_SHARE_KEY + shareId, shareSessionDto);
     return getSuccessResponseVO(null);
   }
 
+
+  /**
+   * 获取分享文件列表
+   * @param session
+   * @param shareId
+   * @param filePid
+   * @return
+   */
+  @RequestMapping("/loadFileList")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO loadFileList(
+      HttpSession session, @VerifyParam(required = true) String shareId, String filePid) {
+    SessionShareDto shareDto = checkShare(session, shareId);
+    FileInfoQuery query = new FileInfoQuery();
+    if (!StringTools.isEmpty(filePid) && !Constants.ZERO_STR.equals(filePid)) {
+      fileInfoService.checkRootFilePid(shareDto.getFileId(), shareDto.getShareUserId(), filePid);
+    } else {
+      query.setFileId(shareDto.getFileId());
+    }
+    query.setUserId(shareDto.getShareUserId());
+    query.setOrderBy("last_update_time desc");
+    query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+
+    PaginationResultVO resultVO = fileInfoService.findListByPage(query);
+    return getSuccessResponseVO(convert2PaginationVO(resultVO, FileInfoVO.class));
+  }
+
+  private SessionShareDto checkShare(HttpSession session, String shareId) {
+    SessionShareDto sessionShareFromSession = getSessionShareFromSession(session, shareId);
+    // 如果session中没有分享信息，则返回错误信息
+    if (sessionShareFromSession == null) {
+      throw new BusinessException(ResponseCodeEnum.CODE_903);
+    }
+    // 分享已经过期
+    if (sessionShareFromSession.getExpireTime() != null
+        && new Date().after(sessionShareFromSession.getExpireTime())) {
+      throw new BusinessException(ResponseCodeEnum.CODE_902);
+    }
+    return sessionShareFromSession;
+  }
+
+  /**
+   * 获取目录信息
+   *
+   * @param session
+   * @param shareId
+   * @param path
+   * @return
+   */
+  @RequestMapping("/getFolderInfo")
+  @GlobalInterceptor(checkLogin = false, checkParam = true)
+  public ResponseVO getFolderInfo(
+      HttpSession session,
+      @VerifyParam(required = true) String shareId,
+      @VerifyParam(required = true) String path) {
+    SessionShareDto shareSessionDto = checkShare(session, shareId);
+    return super.getFolderInfo(path, shareSessionDto.getShareUserId());
+  }
 }
