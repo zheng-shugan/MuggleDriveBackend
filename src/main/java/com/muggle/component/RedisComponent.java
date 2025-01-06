@@ -31,6 +31,16 @@ public class RedisComponent {
   }
 
   /**
+   * 保存系统设置
+   *
+   * @return
+   */
+  public void saveSysSettings(SysSettingsDto sysSettingsDto) {
+
+    redisUtils.set(Constants.REDIS_KEY_SYS_SETTING, sysSettingsDto);
+  }
+
+  /**
    * 保存用户空间使用情况
    *
    * @param userID
