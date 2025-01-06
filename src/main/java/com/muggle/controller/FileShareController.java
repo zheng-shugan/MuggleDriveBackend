@@ -48,4 +48,12 @@ public class FileShareController extends ABaseController {
 
     return getSuccessResponseVO(fileShare);
   }
+
+  @RequestMapping("/cancelShare")
+  @GlobalInterceptor(checkParam = true)
+  public ResponseVO cancelShare(HttpSession session, @VerifyParam(required = true) String shareIds) {
+    SessionWebUserDto userDto = getUserInfoFromSession(session);
+    fileShareService.deleteFileShareBatch(shareIds.split(","), userDto.getUserId());
+    return getSuccessResponseVO(null);
+  }
 }

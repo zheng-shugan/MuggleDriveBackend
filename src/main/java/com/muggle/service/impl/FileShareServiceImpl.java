@@ -12,14 +12,13 @@ import com.muggle.exception.BusinessException;
 import com.muggle.mappers.FileShareMapper;
 import com.muggle.service.FileShareService;
 import com.muggle.utils.DateUtil;
-
+import com.muggle.utils.StringTools;
 import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
-
-import com.muggle.utils.StringTools;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 分享信息 业务接口实现 */
 @Service("fileShareService")
@@ -116,5 +115,15 @@ public class FileShareServiceImpl implements FileShareService {
     fileShare.setShareId(StringTools.getRandomString(Constants.LENGTH_20));
     fileShare.setShowCount(Constants.ZERO);
     this.fileShareMapper.insert(fileShare);
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void deleteFileShareBatch(String[] shareIdArray, String userId) {
+    Integer count = this.fileShareMapper.deleteFileShareBatch(shareIdArray, userId);
+    // 如果删除的数量不等于传入的数量
+    if (count != shareIdArray.length) {
+      throw new BusinessException(ResponseCodeEnum.CODE_600);
+    }
   }
 }

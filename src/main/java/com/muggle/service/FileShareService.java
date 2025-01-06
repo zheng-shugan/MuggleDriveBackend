@@ -37,7 +37,16 @@ public interface FileShareService {
 
   /**
    * 分享文件
+   *
    * @param fileShare
    */
   void saveShare(FileShare fileShare);
+
+  /**
+   * 取消分享
+   *
+   * @param shareIdArray
+   * @param userId
+   */
+  void deleteFileShareBatch(String[] shareIdArray, String userId);
 }
