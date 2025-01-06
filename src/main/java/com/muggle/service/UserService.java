@@ -61,4 +61,20 @@ public interface UserService {
 
   /** 修改密码 */
   void resetPassword(String email, String password, String emailCode);
+
+  /**
+   * 修改用户状态
+   *
+   * @param userId
+   * @param status
+   */
+  void updateUserStatus(String userId, Integer status);
+
+  /**
+   * 修改用户空间
+   *
+   * @param userId
+   * @param changeSpace
+   */
+  void changeUserSpace(String userId, Integer changeSpace);
 }

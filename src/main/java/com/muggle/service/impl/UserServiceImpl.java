@@ -34,9 +34,10 @@ public class UserServiceImpl implements UserService {
   @Resource private EmailCodeService emailCodeService;
 
   @Resource private RedisComponent redisComponent;
-  @Autowired private AppConfig appConfig;
-  @Autowired
-  private FileInfoMapper fileInfoMapper;
+
+  @Resource private AppConfig appConfig;
+
+  @Resource private FileInfoMapper fileInfoMapper;
 
   /** 根据条件查询列表 */
   @Override
@@ -220,5 +221,22 @@ public class UserServiceImpl implements UserService {
     UserInfo updateInfo = new UserInfo();
     updateInfo.setPassword(StringTools.encodeByMD5(password));
     this.userInfoMapper.updateByEmail(updateInfo, email);
+  }
+
+  @Override
+  public void changeUserSpace(String userId, Integer changeSpace) {}
+
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void updateUserStatus(String userId, Integer status) {
+    UserInfo userInfo = new UserInfo();
+    userInfo.setStatus(status);
+    // 如果是禁用账号，清空用户空间
+    if (UserStatusEnum.DISABLE.getStatus().equals(status)) {
+      userInfo.setUseSpace(0L);
+      fileInfoMapper.deleteFileByUserId(userId);
+    }
+    // 更新用户状态
+    userInfoMapper.updateByUserId(userInfo, userId);
   }
 }
