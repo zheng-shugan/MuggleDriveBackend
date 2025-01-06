@@ -211,15 +211,13 @@ public class FileServiceImpl implements FileService {
       }
       File newFile = new File(tempFileFolder.getPath() + File.separator + chunkIndex);
       file.transferTo(newFile);
-
+      // 保存临时文件大小
+      redisComponent.saveTempFileSize(webUserDto.getUserId(), fileId, file.getSize());
       // 最后一个分片
       if (chunkIndex < chunks - 1) {
         resultDto.setStatus(UploadStatusEnums.UPLOADING.getCode());
-        redisComponent.saveTempFileSize(webUserDto.getUserId(), fileId, file.getSize());
         return resultDto;
       }
-      // 不是最后一个分片也要把文件大小加上
-      redisComponent.saveTempFileSize(webUserDto.getUserId(), fileId, file.getSize());
 
       // 最后一个分片上传完，异步合并分片
       String month = DateUtil.format(new Date(), DateTimePatternEnum.YYYYMM.getPattern());
