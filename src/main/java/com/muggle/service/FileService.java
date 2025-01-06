@@ -67,4 +67,20 @@ public interface FileService {
    * @param fileId
    */
   void checkRootFilePid(String rootFilePid, String userId, String fileId);
+
+  /**
+   * 保存分享文件到网盘
+   *
+   * @param shareRootFilePid
+   * @param shareFileIds
+   * @param myFolderId
+   * @param shareUserId
+   * @param currentUserId
+   */
+  void saveShare(
+      String shareRootFilePid,
+      String shareFileIds,
+      String myFolderId,
+      String shareUserId,
+      String currentUserId);
 }

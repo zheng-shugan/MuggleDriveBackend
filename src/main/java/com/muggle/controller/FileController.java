@@ -94,7 +94,7 @@ public class FileController extends CommonFileController {
    * @param imageName
    */
   @RequestMapping("getImage/{imageFolder}/{imageName}")
-  @GlobalInterceptor(checkParam = true)
+  // @GlobalInterceptor(checkParam = true)
   public void getImage(
       HttpServletResponse response,
       @PathVariable("imageFolder") String imageFolder,
